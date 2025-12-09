@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+   <script src="https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.js"></script>
+{% load static %}
+    <script>
+        const image_asset = "{% static 'idle/assets/Background_Full-0001.png' %}";
+        const background_aste = "{% static 'idle/assets/bg_2.png' %}";
+        const image_asset_star1 = "{% static 'idle/assets/Terran.png' %}";
+        const image_asset_star2 = "{% static 'idle/assets/Baren.png' %}";
+        const image_asset_star3 = "{% static 'idle/assets/Black_hole.png' %}";
+        const image_asset_ship = "{% static 'idle/assets/IMG_20251116_213140.png' %}";
+        const image_asset_station = "{% static 'idle/assets/station.png' %}";
+    </script>
+
+
+    <link rel="stylesheet" href="{% static 'idle/style.css' %}">
+    <script type="module" src="{% static 'idle/system.js' %}"></script>
+
+
+    <head>
+        <meta charset="UTF-8">
+        <title>NEBULA FOUNDRY</title>
+    </head>
+
+   <body>
+
+    <div class="top-menu">
+        <!-- Barre de menu vide pour l'instant -->
+        <span class=""><a href="{% url 'hangar' 1 %}">HOME STATION</a></span>
+        <span class=""><a href="{% url 'home' %}">SHIP</a></span>
+        <span class=""><a href="{% url 'system' %}">SYSTEM</a></span>
+    </div>
+
+    <div class="main-container">
+
+        <div class="left-panel">
+            <div id="action-buttons">
+                <!-- Boutons apparaîtront ici en cliquant sur un élément de la scène -->
+                <div id="moving" class="btn-clic">Move To</div>
+                <p id="mining" class="btn-clic">Miner</p>
+                <p id="docking" class="btn-clic">Docker</p>
+            </div>
+
+            <div id="selection-info">
+                <!-- Informations dynamiques sur l'élément sélectionné -->
+                <p>Aucune sélection</p>
+
+            </div>
+
+            <div id="ship-info">
+                <!-- Informations du personnage -->
+                <p>My Ship</p>
+                <p id="storage_ship"></p>
+                <p id="ship_state"></p>
+                <p id="ship_action_status"></p>
+                 <p id="ship_home"></p>
+            </div>
+        </div>
+
+        <div id="scene-container">
+            <!-- La scène du jeu sera affichée ici -->
+        </div>
+
+    </div>
+
+</body>
+</html>

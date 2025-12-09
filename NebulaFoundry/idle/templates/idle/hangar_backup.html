@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interface Vaisseau Spatial</title>
+  <style>
+.top-menu {
+    width: 100%;
+    height: 50px;
+    background: #2b2b2b;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    box-sizing: border-box;
+}
+
+.top-menu span{
+    padding: 15px;
+}
+
+    #hangar {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0a0f1a;
+      color: #e0e6f1;
+      display: flex;
+      height: 900px;
+    }
+
+    /* Barre latérale */
+    .sidebar {
+      width: 220px;
+      background: #111827;
+      border-right: 2px solid #1f2937;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+
+    .sidebar h2 {
+      margin-top: 0;
+      font-size: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+      color: #93c5fd;
+    }
+
+    .menu-button {
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 6px;
+      color: #e5e7eb;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.2s;
+    }
+
+    .menu-button:hover {
+      background: #374151;
+    }
+
+    /* Zone de contenu */
+    .content {
+      flex: 1;
+      padding: 25px;
+    }
+
+    .panel {
+      background: #1f2937;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #374151;
+    }
+
+    h1 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #93c5fd;
+    }
+
+    .inventory-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 15px;
+    }
+
+    .item {
+      background: #111827;
+      border: 1px solid #374151;
+      padding: 10px;
+      border-radius: 5px;
+      text-align: center;
+    }
+
+    .item h3 {
+      margin: 5px 0;
+      font-size: 16px;
+      color: #93c5fd;
+    }
+
+    .item span {
+      font-size: 14px;
+      color: #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+
+   <div class="top-menu">
+        <span class=""><a href="{% url 'hangar' %}">HOME STATION</a></span>
+        <span class=""><a href="{% url 'home' %}">SHIP</a></span>>
+    </div>
+
+    <div id="hangar">
+        <div class="sidebar">
+    <h2>DEDOCK</h2>
+    <button class="menu-button" onclick="loadPanel('inventory')">Inventaire</button>
+    <button class="menu-button" onclick="loadPanel('production')">Production</button>
+    <button class="menu-button" onclick="loadPanel('crew')">Équipage</button>
+    <button class="menu-button" onclick="loadPanel('missions')">Missions</button>
+    <button class="menu-button" onclick="loadPanel('comms')">Communications</button>
+  </div>
+
+  <div class="content" id="content-area">
+    <div class="panel"><h1>Bienvenue Commandant</h1><p>Sélectionnez un menu à gauche.</p></div>
+  </div>
+    </div>
+
+
+  <script>
+    function loadPanel(type) {
+      const content = document.getElementById("content-area");
+      let html = "";
+
+      switch (type) {
+        case 'inventory':
+          html = `
+            <div class='panel'>
+              <h1>Inventaire</h1>
+              <div class='inventory-grid'>
+                <div class='item'><h3>Fer</h3><span>320 u</span></div>
+                <div class='item'><h3>Cristaux</h3><span>58 u</span></div>
+                <div class='item'><h3>Hydrogène</h3><span>120 u</span></div>
+                <div class='item'><h3>Titane</h3><span>42 u</span></div>
+              </div>
+            </div>`;
+          break;
+
+        case 'production':
+          html = `<div class='panel'><h1>Production</h1><p>Gestion des usines, raffinage et chaînes d'assemblage.</p></div>`;
+          break;
+
+        case 'crew':
+          html = `<div class='panel'><h1>Équipage</h1><p>Liste des membres, affectations et compétences.</p></div>`;
+          break;
+
+        case 'missions':
+          html = `<div class='panel'><h1>Missions</h1><p>Contrats, objectifs et progression.</p></div>`;
+          break;
+
+        case 'comms':
+          html = `<div class='panel'><h1>Communications</h1><p>Messages, échanges commerciaux et interactions multijoueur.</p></div>`;
+          break;
+      }
+
+      content.innerHTML = html;
+    }
+  </script>
+</body>
+</html>

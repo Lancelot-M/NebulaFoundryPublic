@@ -1,0 +1,78 @@
+body {
+    margin: 0;
+    padding: 0;
+    background: #1a1a1a;
+    font-family: Arial, sans-serif;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Barre de menu */
+.top-menu {
+    width: 100%;
+    height: 50px;
+    background: #2b2b2b;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    box-sizing: border-box;
+}
+
+.top-menu span{
+    padding: 15px;
+}
+
+/* Conteneur principal */
+.main-container {
+    display: flex;
+    flex: 1;
+}
+
+/* Zone de la scène */
+#scene-container {
+    flex: 1;
+    position: relative;
+}
+
+/* Panneau latéral gauche */
+.left-panel {
+    width: 280px;
+    background: #232323;
+    display: flex;
+    flex-direction: column;
+    border-right: 2px solid #111;
+}
+
+/* Boutons d'action */
+#action-buttons {
+    padding: 10px;
+    background: #2c2c2c;
+    border-bottom: 1px solid #1a1a1a;
+    min-height: 70px;
+}
+
+/* Informations sur l'objet sélectionné */
+#selection-info {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    background: #252525;
+}
+
+/* Infos personnage */
+#ship-info {
+    padding: 10px;
+    background: #1e1e1e;
+    border-top: 2px solid #111;
+    height: 150px;
+}
+
+.btn-clic:hover {
+    cursor: pointer;
+}
+
+.hide {
+    display: none;
+}
