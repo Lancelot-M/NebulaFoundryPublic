@@ -98,7 +98,6 @@ app.view.addEventListener("wheel", (event) => {
     world.x -= dx;
     world.y -= dy;
 
-    console.log(zoom);
 });
 
 })();

@@ -23,7 +23,7 @@ export function addShip(app, sprites) {
     ship.action = 'spawned';
     ship.action_status = 'spawned';
     ship.home = null;
-    ship.storage_max = 100;
+    ship.storage_max = 10;
     ship.storage = shipData.storage;
     ship.scale = 0.8;
     app.stage.addChild(ship);
@@ -34,6 +34,8 @@ export function addShip(app, sprites) {
 export function makeShipMove(app, sprites) {
 
     let ship = sprites.ship;
+
+    ship.home = sprites.station
     // Opt-in to interactivity
     sprites.station.eventMode = 'static';
     sprites.planet.eventMode = 'static';
@@ -65,7 +67,7 @@ export function makeShipMove(app, sprites) {
 
 export function animateShip(app, sprites, time) {
     if (sprites.ship.action == 'moving') {
-        travelingShip(sprites, time);
+        travelingShip(sprites, sprites.ship.target, time);
     }
     else if (sprites.ship.action == 'mining') {
         miningShip(app, sprites, time);
@@ -77,10 +79,8 @@ export function animateShip(app, sprites, time) {
 
 export function dockingShip(app, sprites, time) {
     if (sprites.ship.x != sprites.ship.target.x || sprites.ship.y != sprites.ship.target.y) {
-        travelingShip(sprites, time);
-        return
+        travelingShip(sprites, sprites.ship.target, time);
     }
-    sprites.ship.home = sprites.ship.target;
     if (sprites.ship.storage < 1) {
         sprites.ship.action = 'inactif';
         sprites.ship.storage = 0;
@@ -96,7 +96,7 @@ export function dockingShip(app, sprites, time) {
 export function miningShip(app, sprites, time) {
     if (sprites.ship.action_status == 'go_to') {
         if (sprites.ship.inGameX != sprites.ship.target.x || sprites.ship.inGameY != sprites.ship.target.y) {
-            travelingShip(sprites, time);
+            travelingShip(sprites, sprites.ship.target, time);
         }
         else {
             sprites.ship.action_status = 'actif';
@@ -112,7 +112,7 @@ export function miningShip(app, sprites, time) {
     }
     else if (sprites.ship.action_status == 'go_back') {
         if (sprites.ship.inGameX != sprites.ship.home.x || sprites.ship.inGameY != sprites.ship.home.y) {
-            travelingShip(sprites, time);
+            travelingShip(sprites, sprites.ship.home, time);
         }
         else {
             sprites.ship.action_status = 'landing';
@@ -121,11 +121,54 @@ export function miningShip(app, sprites, time) {
     else if (sprites.ship.action_status == 'landing') {
         if (sprites.ship.storage == 0) {
             sprites.ship.action_status = 'go_to';
+
+
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+const payload = JSON.stringify({
+        'storage_max': sprites.ship.storage_max,
+        'pipou': 'tout doux',
+    });
+
+(async () => {
+
+
+
+    const rawResponse = await fetch('http://localhost:8000/hangar/unload/1', {
+        method: 'POST',
+        headers: {
+            "X-CSRFToken": csrftoken,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: payload,
+        credentials: "same-origin"
+      });
+    const content = await rawResponse.json();
+
+    console.log(content);
+})();
+
         }
         else {
             if (sprites.ship.storage - 1 < 0) {
                 sprites.ship.storage = 0;
-            }
+                }
             else {
                 sprites.ship.storage = sprites.ship.storage - 1;
                 sprites.ship.home.storage = sprites.ship.home.storage + 1;
@@ -139,9 +182,8 @@ export function miningShip(app, sprites, time) {
 }
 
 
-export function travelingShip(sprites, time) {
+export function travelingShip(sprites, dest, time) {
     let ship = sprites.ship;
-    let dest = sprites.ship.target;
     let system = sprites.container;
 
 
