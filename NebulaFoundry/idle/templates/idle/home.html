@@ -17,6 +17,14 @@
         {{ ship_json|safe }}
     </script>
 
+    <script id="ore-data" type="application/json">
+        {{ ore|safe }}
+    </script>
+
+   <script id="stations-data" type="application/json">
+        {{ stations|safe }}
+    </script>
+
 
     <link rel="stylesheet" href="{% static 'idle/style.css' %}">
     <script type="module" src="{% static 'idle/index.js' %}"></script>

@@ -27,20 +27,23 @@ export function addPlanets(systemContainer, sprites) {
 
 
 export function addAstero(systemContainer, sprites, app) {
+
+    const oreData = JSON.parse(
+        document.getElementById("ore-data").textContent
+    );
+
     var astero_array = [];
-    var ore_count = 25;
-    for (let i = 0; i < ore_count; i++) {
-          const astero = Sprite.from('ore_s');
-          astero.anchor.set(0.5);
-          astero.name = 'ore_s';
-            astero.amount = 200000;
-            astero.scale = 0.5;
-            astero.action_possible = ['moving', 'mining'];
-          astero.x = Math.random() * 2000;
-          astero.y = Math.random() * 1000;
-          astero.eventMode = 'static';
-          astero.cursor = 'pointer';
-          astero.on('pointerdown', onClick);
+    for (var ore of oreData) {
+          var pixi_ore = Sprite.from('ore_s');
+          pixi_ore.anchor.set(0.5);
+          pixi_ore.x = ore.fields.pos_x;
+          pixi_ore.y = ore.fields.pos_y;
+          pixi_ore.django_ore = ore;
+          pixi_ore.scale = 0.5;
+          pixi_ore.action_possible = ['moving', 'mining'];
+          pixi_ore.eventMode = 'static';
+          pixi_ore.cursor = 'pointer';
+          pixi_ore.on('pointerdown', onClick);
 
           // Alternatively, use the mouse & touch events:
     // sprite.on('click', onClick); // mouse-only
@@ -56,21 +59,36 @@ export function addAstero(systemContainer, sprites, app) {
         }
     }
 
-          systemContainer.addChild(astero);
-          astero_array.push(astero);
+          systemContainer.addChild(pixi_ore);
+          astero_array.push(pixi_ore);
         }
+        sprites.ore_array = astero_array
     return sprites
 }
 
 export function addStation(systemContainer, sprites) {
-    const station = Sprite.from('station');
-    station.name = 'Station Spatiale';
-    station.position.set(400, 1200);
-    station.anchor = 0.5;
-    station.storage = 0;
-    station.scale = 1;
-    station.action_possible = ['moving', 'docking'];
-    systemContainer.addChild(station);
-    sprites.station = station
+
+
+    const stationData = JSON.parse(
+        document.getElementById("stations-data").textContent
+    );
+    var stations_array = [];
+
+    for (var station of stationData) {
+            var pixi_station = Sprite.from('station');
+            pixi_station.name = station.fields.name;
+            pixi_station.x = station.fields.pos_x;
+            pixi_station.y = station.fields.pos_y;
+            pixi_station.django_station = station;
+            pixi_station.anchor = 0.5;
+            pixi_station.storage = station.storage;
+            pixi_station.scale = 1;
+            pixi_station.action_possible = ['moving', 'docking'];
+            systemContainer.addChild(pixi_station);
+            stations_array.push(pixi_station);
+        }
+        sprites.stations_array = stations_array
     return sprites
+
+
 }

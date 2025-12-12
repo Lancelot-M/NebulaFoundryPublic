@@ -34,19 +34,20 @@ export function addShip(app, sprites) {
 export function makeShipMove(app, sprites) {
 
     let ship = sprites.ship;
+    let home_station = sprites.stations_array[0]
 
-    ship.home = sprites.station
+    ship.home = home_station
     // Opt-in to interactivity
-    sprites.station.eventMode = 'static';
-    sprites.planet.eventMode = 'static';
+    home_station.eventMode = 'static';
+    home_station.eventMode = 'static';
 
     // Shows hand cursor
-    sprites.station.cursor = 'pointer';
+    home_station.cursor = 'pointer';
     sprites.planet.cursor = 'pointer';
 
     // Pointers normalize touch and mouse (good for mobile and desktop)
     sprites.planet.on('pointerdown', onClick);
-    sprites.station.on('pointerdown', onClick);
+    home_station.on('pointerdown', onClick);
 
     // Alternatively, use the mouse & touch events:
     // sprite.on('click', onClick); // mouse-only
@@ -122,48 +123,39 @@ export function miningShip(app, sprites, time) {
         if (sprites.ship.storage == 0) {
             sprites.ship.action_status = 'go_to';
 
-
-
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
+            function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
             }
+            return cookieValue;
         }
-    }
-    return cookieValue;
-}
-const csrftoken = getCookie('csrftoken');
-const payload = JSON.stringify({
-        'storage_max': sprites.ship.storage_max,
-        'pipou': 'tout doux',
-    });
+            const csrftoken = getCookie('csrftoken');
+            const payload = JSON.stringify({
+                    'storage_max': sprites.ship.storage_max,
+                });
+            (async () => {
+                const rawResponse = await fetch('http://localhost:8000/hangar/unload/1', {
+                    method: 'POST',
+                    headers: {
+                        "X-CSRFToken": csrftoken,
+                      'Accept': 'application/json',
+                      'Content-Type': 'application/json'
+                    },
+                    body: payload,
+                  });
+                const content = await rawResponse.text();
 
-(async () => {
-
-
-
-    const rawResponse = await fetch('http://localhost:8000/hangar/unload/1', {
-        method: 'POST',
-        headers: {
-            "X-CSRFToken": csrftoken,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: payload,
-        credentials: "same-origin"
-      });
-    const content = await rawResponse.json();
-
-    console.log(content);
-})();
-
+                console.log(content);
+            })();
         }
         else {
             if (sprites.ship.storage - 1 < 0) {
@@ -175,10 +167,6 @@ const payload = JSON.stringify({
             }
         }
     }
-
-
-
-
 }
 
 

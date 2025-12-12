@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.http import Http404, HttpResponse
 import json
 
-from .models import Station
+from .models import Station, System
 
 
 # ...
@@ -31,20 +31,23 @@ def unload(request, station_id):
 
 def home(request):
     #ship = SpaceShip.objects.get(player=request.user)
-
-    ship_data = {
-        "id": 1,
-        "name": 'KIKOU',
-        "pos_x": 400,
-        "pos_y": 1200,
-        "speed": 10,
-        "storage": 0,
-        "storage_max": 0,
-        "minning_speed": 1,
-    }
-    return render(request, "idle/home.html", {
-        "ship_json": json.dumps(ship_data),
+    system = System.objects.get(pk=1)
+    system.check_ore_n_create_missing()
+    data = system.get_data()
+    data.update({
+        "ship_json": json.dumps({
+            "id": 1,
+            "name": 'KIKOU',
+            "pos_x": system.width // 2,
+            "pos_y": system.height // 2,
+            "speed": 10,
+            "storage": 0,
+            "storage_max": 0,
+            "minning_speed": 1,
+        }),
     })
+
+    return render(request, "idle/home.html", data)
 
 def system(request):
     return render(request, "idle/system.html", {})
