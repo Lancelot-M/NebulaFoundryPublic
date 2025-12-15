@@ -1,6 +1,9 @@
 from django.db import models
 import random
 from django.core import serializers
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -22,16 +25,25 @@ class System(models.Model):
         center_y = self.height // 2
         new_ore = Ore.objects.create(
             name="ORE",
-            storage=4000,
+            storage=10,
             system_id=self,
-            pos_x=random.randrange(center_x + 200, center_x + 600),
-            pos_y=random.randrange(center_y + 200, center_y + 600),
+            pos_x=random.randrange(center_x + 500, center_x + 1000),
+            pos_y=random.randrange(center_y + 500, center_y + 1000),
         )
         new_ore.save()
 
     def check_ore_n_create_missing(self):
         while Ore.ore_nb_in_system(self.pk) < 9:
             self.generate_ore()
+        self.delete_empty_ore()
+
+    def delete_empty_ore(self):
+        try:
+            empty_ores = Ore.objects.filter(system_id=self.pk, storage=0)
+            logger.warning(f"{len(empty_ores)} ores supprimés dans le système {self.name}")
+            empty_ores.delete()
+        except Ore.DoesNotExist:
+            logger.warning("Aucun ore supprimé dans le system")
 
     def get_data(self):
         return {
@@ -73,11 +85,13 @@ class Ore(models.Model):
 
     @staticmethod
     def ore_nb_in_system(system_id):
-        """REtourn le nombre d'ore dans le system"""
+        """Retourn le nombre d'ore dans le system"""
         try:
-            Ore_number = len(Ore.objects.filter(system_id=system_id))
+            ores = Ore.objects.filter(system_id=system_id)
+            Ore_number = len(ores)
         except Ore.DoesNotExist:
             Ore_number = 0
         return Ore_number
+
 
 

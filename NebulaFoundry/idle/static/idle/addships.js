@@ -1,6 +1,7 @@
 const { Sprite, Texture, Graphics } = PIXI;
 
 
+
 export function addShip(app, sprites) {
 
     const shipData = JSON.parse(
@@ -23,7 +24,7 @@ export function addShip(app, sprites) {
     ship.action = 'spawned';
     ship.action_status = 'spawned';
     ship.home = null;
-    ship.storage_max = 10;
+    ship.storage_max = shipData.storage_max;
     ship.storage = shipData.storage;
     ship.scale = 0.8;
     app.stage.addChild(ship);
@@ -88,6 +89,7 @@ export function dockingShip(app, sprites, time) {
     }
     else {
         sprites.ship.storage = sprites.ship.storage - 1;
+        console.log('Unloading');
         sprites.ship.home.storage = sprites.ship.home.storage +  1;
     }
 
@@ -95,35 +97,11 @@ export function dockingShip(app, sprites, time) {
 }
 
 export function miningShip(app, sprites, time) {
-    if (sprites.ship.action_status == 'go_to') {
-        if (sprites.ship.inGameX != sprites.ship.target.x || sprites.ship.inGameY != sprites.ship.target.y) {
-            travelingShip(sprites, sprites.ship.target, time);
-        }
-        else {
-            sprites.ship.action_status = 'actif';
-        }
-    }
-    else if (sprites.ship.action_status == 'actif') {
-        if (sprites.ship.storage + sprites.ship.minning_speed >= sprites.ship.storage_max) {
-            sprites.ship.action_status = 'go_back';
-        }
-        else {
-            sprites.ship.storage = sprites.ship.storage + sprites.ship.minning_speed;
-        }
-    }
-    else if (sprites.ship.action_status == 'go_back') {
-        if (sprites.ship.inGameX != sprites.ship.home.x || sprites.ship.inGameY != sprites.ship.home.y) {
-            travelingShip(sprites, sprites.ship.home, time);
-        }
-        else {
-            sprites.ship.action_status = 'landing';
-        }
-    }
-    else if (sprites.ship.action_status == 'landing') {
-        if (sprites.ship.storage == 0) {
-            sprites.ship.action_status = 'go_to';
 
-            function getCookie(name) {
+
+
+
+        function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
                 const cookies = document.cookie.split(';');
@@ -138,8 +116,60 @@ export function miningShip(app, sprites, time) {
             }
             return cookieValue;
         }
+
+
+    if (sprites.ship.action_status == 'go_to') {
+        if (sprites.ship.inGameX != sprites.ship.target.x || sprites.ship.inGameY != sprites.ship.target.y) {
+            travelingShip(sprites, sprites.ship.target, time);
+        }
+        else {
+            sprites.ship.action_status = 'actif';
+        }
+    }
+    else if (sprites.ship.action_status == 'actif') {
+        if (sprites.ship.storage + sprites.ship.minning_speed >= sprites.ship.storage_max) {
+            sprites.ship.action_status = 'go_back';
+        }
+        else {
+            sprites.ship.storage = sprites.ship.storage + sprites.ship.minning_speed;
+            sprites.ship.target.storage = sprites.ship.target.storage - sprites.ship.minning_speed;
+
+            if (sprites.ship.target.storage <= 0) {
+
+                    sprites.ship.action_status = 'inactif';
+                    app.gameState.selected = null;
+                    const removed = sprites.container.removeChild(sprites.ship.target);
+                    sprites.ship.target = null;
+                    var csrftoken = getCookie('csrftoken');
+                    var del_url = `http://localhost:8000/ore/delete/${removed.django_ore.pk}`;
+                    fetch(del_url, {
+                      method: "DELETE",
+                      headers: {
+                        "X-CSRFToken": csrftoken,
+                      'Accept': 'application/json',
+                      'Content-Type': 'application/json'
+                    },
+                    });
+
+            }
+        }
+    }
+    else if (sprites.ship.action_status == 'go_back') {
+        if (sprites.ship.inGameX != sprites.ship.home.x || sprites.ship.inGameY != sprites.ship.home.y) {
+            travelingShip(sprites, sprites.ship.home, time);
+        }
+        else {
+            sprites.ship.action_status = 'landing';
+        }
+    }
+    else if (sprites.ship.action_status == 'landing') {
+        if (sprites.ship.storage == 0) {
+            sprites.ship.action_status = 'go_to';
+
+
+        }
             const csrftoken = getCookie('csrftoken');
-            const payload = JSON.stringify({
+            var payload = JSON.stringify({
                     'storage_max': sprites.ship.storage_max,
                 });
             (async () => {
@@ -167,7 +197,6 @@ export function miningShip(app, sprites, time) {
             }
         }
     }
-}
 
 
 export function travelingShip(sprites, dest, time) {

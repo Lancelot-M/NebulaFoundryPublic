@@ -39,7 +39,8 @@ export function addAstero(systemContainer, sprites, app) {
           pixi_ore.x = ore.fields.pos_x;
           pixi_ore.y = ore.fields.pos_y;
           pixi_ore.django_ore = ore;
-          pixi_ore.scale = 0.5;
+          pixi_ore.storage = ore.fields.storage;
+          pixi_ore.scale = 1;
           pixi_ore.action_possible = ['moving', 'mining'];
           pixi_ore.eventMode = 'static';
           pixi_ore.cursor = 'pointer';

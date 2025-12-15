@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.http import Http404, HttpResponse
 import json
 
-from .models import Station, System
+from .models import Station, System, Ore
 
 
 # ...
@@ -27,7 +27,17 @@ def unload(request, station_id):
         raise Http404("Station does not exist")
     return HttpResponse("Chargement déposé")
 
+def delete_ore(request, ore_id):
+    try:
+        ore = Ore.objects.get(pk=ore_id)
 
+        ore.delete()
+
+    except Station.DoesNotExist:
+        raise Http404("Ore does not exist")
+    except Exception as e:
+        raise e
+    return HttpResponse("Ore deleted")
 
 def home(request):
     #ship = SpaceShip.objects.get(player=request.user)
@@ -40,9 +50,9 @@ def home(request):
             "name": 'KIKOU',
             "pos_x": system.width // 2,
             "pos_y": system.height // 2,
-            "speed": 10,
+            "speed": 500,
             "storage": 0,
-            "storage_max": 0,
+            "storage_max": 100,
             "minning_speed": 1,
         }),
     })
