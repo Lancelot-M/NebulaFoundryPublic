@@ -2,7 +2,7 @@ const { Sprite, Texture, Graphics } = PIXI;
 
 
 
-export function addShip(app, sprites) {
+export function addShip(app) {
 
     const shipData = JSON.parse(
         document.getElementById("ship-data").textContent
@@ -28,14 +28,13 @@ export function addShip(app, sprites) {
     ship.storage = shipData.storage;
     ship.scale = 0.8;
     app.stage.addChild(ship);
-    sprites.ship = ship;
-    return sprites;
+    app.gameState.ship = ship;
 }
 
-export function makeShipMove(app, sprites) {
+export function makeShipMove(app) {
 
-    let ship = sprites.ship;
-    let home_station = sprites.stations_array[0]
+    var ship = app.gameState.ship;
+    var home_station = app.gameState.station
 
     ship.home = home_station
     // Opt-in to interactivity
@@ -44,10 +43,10 @@ export function makeShipMove(app, sprites) {
 
     // Shows hand cursor
     home_station.cursor = 'pointer';
-    sprites.planet.cursor = 'pointer';
+   // app.gameState.planet.cursor = 'pointer';
 
     // Pointers normalize touch and mouse (good for mobile and desktop)
-    sprites.planet.on('pointerdown', onClick);
+    //app.gameState.planet.on('pointerdown', onClick);
     home_station.on('pointerdown', onClick);
 
     // Alternatively, use the mouse & touch events:
@@ -67,40 +66,40 @@ export function makeShipMove(app, sprites) {
 
 
 
-export function animateShip(app, sprites, time) {
-    if (sprites.ship.action == 'moving') {
-        travelingShip(sprites, sprites.ship.target, time);
+export function animateShip(app, time) {
+    if (app.gameState.ship.action == 'moving') {
+        travelingTarget(app, time);
     }
-    else if (sprites.ship.action == 'mining') {
-        miningShip(app, sprites, time);
+    else if (app.gameState.ship.action == 'mining') {
+        miningShip(app, time);
     }
-    else if (sprites.ship.action == 'docking') {
-        dockingShip(app, sprites, time);
+    else if (app.gameState.ship.action == 'docking') {
+        dockingShip(app, time);
     }
 }
 
-export function dockingShip(app, sprites, time) {
-    if (sprites.ship.x != sprites.ship.target.x || sprites.ship.y != sprites.ship.target.y) {
-        travelingShip(sprites, sprites.ship.target, time);
+export function dockingShip(app, time) {
+    if (app.gameState.ship.x != app.gameState.ship.target.x || app.gameState.ship.y != app.gameState.ship.target.y) {
+        travelingStation(app, time);
     }
-    if (sprites.ship.storage < 1) {
-        sprites.ship.action = 'inactif';
-        sprites.ship.storage = 0;
+    if (app.gameState.ship.storage < 1) {
+        app.gameState.ship.action = 'inactif';
+        app.gameState.ship.storage = 0;
     }
     else {
-        sprites.ship.storage = sprites.ship.storage - 1;
+        app.gameState.ship.storage = app.gameState.ship.storage - 1;
         console.log('Unloading');
-        sprites.ship.home.storage = sprites.ship.home.storage +  1;
+        app.gameState.ship.home.storage = app.gameState.ship.home.storage +  1;
     }
 
 
 }
 
-export function miningShip(app, sprites, time) {
+export function miningShip(app, time) {
 
 
 
-
+// COOOOOK
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -118,101 +117,123 @@ export function miningShip(app, sprites, time) {
         }
 
 
-    if (sprites.ship.action_status == 'go_to') {
-        if (sprites.ship.inGameX != sprites.ship.target.x || sprites.ship.inGameY != sprites.ship.target.y) {
-            travelingShip(sprites, sprites.ship.target, time);
+    if (app.gameState.ship.action_status == 'go_to') {
+        if (app.gameState.ship.inGameX != app.gameState.ship.target.x || app.gameState.ship.inGameY != app.gameState.ship.target.y) {
+            travelingTarget(app, time);
         }
         else {
-            sprites.ship.action_status = 'actif';
+            app.gameState.ship.action_status = 'actif';
         }
     }
-    else if (sprites.ship.action_status == 'actif') {
-        if (sprites.ship.storage + sprites.ship.minning_speed >= sprites.ship.storage_max) {
-            sprites.ship.action_status = 'go_back';
+    else if (app.gameState.ship.action_status == 'actif') {
+        if (app.gameState.ship.storage + app.gameState.ship.minning_speed >= app.gameState.ship.storage_max) {
+            app.gameState.ship.action_status = 'go_back';
         }
         else {
-            sprites.ship.storage = sprites.ship.storage + sprites.ship.minning_speed;
-            sprites.ship.target.storage = sprites.ship.target.storage - sprites.ship.minning_speed;
+            app.gameState.ship.storage = app.gameState.ship.storage + app.gameState.ship.minning_speed;
+            app.gameState.ship.target.storage = app.gameState.ship.target.storage - app.gameState.ship.minning_speed;
 
-            if (sprites.ship.target.storage <= 0) {
-
-                    sprites.ship.action_status = 'inactif';
-                    app.gameState.selected = null;
-                    const removed = sprites.container.removeChild(sprites.ship.target);
-                    sprites.ship.target = null;
+            if (app.gameState.ship.target.storage <= 0) {
+                    app.gameState.ship.action_status = 'inactif';
+                    var ore_pk = app.gameState.ship.target.pk
+                    var removed = app.gameState.system_container.removeChild(app.gameState.ship.target);
+                    app.gameState.ship.target = null;
                     var csrftoken = getCookie('csrftoken');
-                    var del_url = `http://localhost:8000/ore/delete/${removed.django_ore.pk}`;
-                    fetch(del_url, {
+                    var del_url = `http://localhost:8000/ore/delete/${ore_pk}`;
+                    var reponse = fetch(del_url, {
                       method: "DELETE",
                       headers: {
-                        "X-CSRFToken": csrftoken,
-                      'Accept': 'application/json',
-                      'Content-Type': 'application/json'
-                    },
+                           "X-CSRFToken": csrftoken,
+                          'Accept': 'application/json',
+                          'Content-Type': 'application/json'
+                        },
                     });
+                    console.log(reponse);
+                    console.log(ore_pk);
+                    console.log(removed);
 
             }
         }
     }
-    else if (sprites.ship.action_status == 'go_back') {
-        if (sprites.ship.inGameX != sprites.ship.home.x || sprites.ship.inGameY != sprites.ship.home.y) {
-            travelingShip(sprites, sprites.ship.home, time);
+    else if (app.gameState.ship.action_status == 'go_back') {
+        if (app.gameState.ship.inGameX != app.gameState.ship.home.x || app.gameState.ship.inGameY != app.gameState.ship.home.y) {
+            travelingStation(app, time);
         }
         else {
-            sprites.ship.action_status = 'landing';
+            app.gameState.ship.action_status = 'landing';
         }
     }
-    else if (sprites.ship.action_status == 'landing') {
-        if (sprites.ship.storage == 0) {
-            sprites.ship.action_status = 'go_to';
+    else if (app.gameState.ship.action_status == 'landing') {
+        if (app.gameState.ship.storage == 0) {
+            app.gameState.ship.action_status = 'go_to';
+            console.log('go_to');
+        }
+
+        var unload_qty = app.gameState.ship.storage;
+        app.gameState.ship.storage = 0;
+        // VIDE SOUTE DANS STATION
+        var csrftoken = getCookie('csrftoken');
+        var payload = JSON.stringify({
+                'storage_max': unload_qty,
+            });
+        var rawResponse = fetch('http://localhost:8000/hangar/unload/1', {
+            method: 'POST',
+            headers: {
+                "X-CSRFToken": csrftoken,
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: payload,
+          });
+
+        console.log(rawResponse);
 
 
-        }
-            const csrftoken = getCookie('csrftoken');
-            var payload = JSON.stringify({
-                    'storage_max': sprites.ship.storage_max,
-                });
-            (async () => {
-                const rawResponse = await fetch('http://localhost:8000/hangar/unload/1', {
-                    method: 'POST',
-                    headers: {
-                        "X-CSRFToken": csrftoken,
-                      'Accept': 'application/json',
-                      'Content-Type': 'application/json'
-                    },
-                    body: payload,
-                  });
-                const content = await rawResponse.text();
 
-                console.log(content);
-            })();
-        }
-        else {
-            if (sprites.ship.storage - 1 < 0) {
-                sprites.ship.storage = 0;
-                }
-            else {
-                sprites.ship.storage = sprites.ship.storage - 1;
-                sprites.ship.home.storage = sprites.ship.home.storage + 1;
-            }
-        }
     }
+    else if (app.gameState.ship.action_status == 'inactif') {
+
+        var new_ore = null;
+        for (var ore of app.gameState.ores) {
+                app.gameState.ship.target = ore[1];
+                app.gameState.ores.delete(ore[0])
+                break;
+        }
+        if (app.gameState.ship.target) {
+                app.gameState.ship.action_status = 'go_to';
+        }
+
+    }
+    else {
+        app.gameState.ship.action_status = 'inactif'
+    }
+}
 
 
-export function travelingShip(sprites, dest, time) {
-    let ship = sprites.ship;
-    let system = sprites.container;
 
+export function travelingStation(app, time) {
+    var dest = app.gameState.station;
+    travelingShip(app, dest, time);
+}
 
-    let x1 = ship.inGameX;
-    let x2 = dest.x;
+export function travelingTarget(app, time) {
+    var dest = app.gameState.ship.target;
+    travelingShip(app, dest, time);
+}
 
-    let y1 = ship.inGameY;
-    let y2 = dest.y;
+export function travelingShip(app, dest, time) {
+    var ship = app.gameState.ship;
+    var system = app.gameState.container;
+
+    var x1 = ship.inGameX;
+    var x2 = dest.x;
+
+    var y1 = ship.inGameY;
+    var y2 = dest.y;
 
     const dx = x2 - x1;
     const dy = y2 - y1;
-    let rotation = Math.atan2(dy, dx) + Math.PI / 2
+    var rotation = Math.atan2(dy, dx) + Math.PI / 2
     const len = Math.hypot(dx, dy);
 
     // vecteur direction normalisé

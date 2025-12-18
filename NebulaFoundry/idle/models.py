@@ -2,6 +2,7 @@ from django.db import models
 import random
 from django.core import serializers
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -46,9 +47,20 @@ class System(models.Model):
             logger.warning("Aucun ore supprimé dans le system")
 
     def get_data(self):
+        ship = Ship.objects.get(pk=5)
         return {
             'ore': serializers.serialize('json', Ore.objects.filter(system_id=self.pk)),
             'stations': serializers.serialize('json', Station.objects.filter(system_id=self.pk)),
+            'ship': json.dumps({
+                'speed': 25,
+                'minning_speed': ship.minning_speed,
+                'pos_x': ship.pos_x,
+                'pos_y': ship.pos_y,
+                'action': ship.action_order,
+                'action_status': ship.action_now,
+                'storage_max': ship.storage_max,
+                'storage': ship.storage_now,
+            }),
         }
 
 
@@ -56,11 +68,12 @@ class System(models.Model):
 class Ship(models.Model):
     storage_max = models.IntegerField(default=0)
     storage_now = models.IntegerField(default=0)
+    minning_speed = models.IntegerField(default=0)
     speed = models.IntegerField(default=0)
-    action_order = models.CharField('Ordre donné')
-    action_now = models.CharField('Action en cours')
-    home_station = models.CharField('Home')
-    system_target = models.CharField('Cible')
+    action_order = models.CharField('Ordre donné', default="")
+    action_now = models.CharField('Action en cours', default="")
+    home_station = models.CharField('Home', default="")
+    system_target = models.CharField('Cible', default="")
     pos_x = models.IntegerField(default=0)
     pos_y = models.IntegerField(default=0)
 

@@ -44,18 +44,7 @@ def home(request):
     system = System.objects.get(pk=1)
     system.check_ore_n_create_missing()
     data = system.get_data()
-    data.update({
-        "ship_json": json.dumps({
-            "id": 1,
-            "name": 'KIKOU',
-            "pos_x": system.width // 2,
-            "pos_y": system.height // 2,
-            "speed": 500,
-            "storage": 0,
-            "storage_max": 100,
-            "minning_speed": 1,
-        }),
-    })
+
 
     return render(request, "idle/home.html", data)
 

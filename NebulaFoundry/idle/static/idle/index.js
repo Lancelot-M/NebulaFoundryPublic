@@ -7,11 +7,13 @@ import { displayMenus, showActionMenu } from './menuaction.js';
 
 // Create a PixiJS application.
 const app = new Application();
-let sprites = {};
-app.gameState = {
-    selected: null,
-    ship: null
-};
+app.gameState = new Map ();
+app.gameState.selected = null;
+app.gameState.ship = null;
+app.gameState.system_container = null;
+app.gameState.ores = new Map();
+app.gameState.station = null;
+
 
 // Store an array of fish sprites for animation.
 async function setup() {
@@ -19,7 +21,6 @@ async function setup() {
   await app.init({ background: '#1099bb', resizeTo: game_window });
   game_window.appendChild(app.canvas);
 }
-
 async function preload() {
   const assets = [
     {alias: 'background_star', src: image_asset },
@@ -38,27 +39,24 @@ async function preload() {
 (async () => {
   await setup();
   await preload();
-
   addBackground(app);
-  sprites = addSystemElement(app, sprites);
-  sprites = addShip(app, sprites);
-
-  showActionMenu(app, sprites);
-  makeShipMove(app, sprites);
-
+  addSystemElement(app);
+  addShip(app);
+  showActionMenu(app);
+  makeShipMove(app);
 
 
   // Add the fish animation callback to the application's ticker.
   app.ticker.add(
     (delta) => {
-        sprites.container.x = -sprites.ship.inGameX + sprites.ship.x;
-        sprites.container.y = -sprites.ship.inGameY + sprites.ship.y;
-        animateShip(app, sprites, delta);
-        displayMenus(app, sprites);
+        app.gameState.system_container.x = -app.gameState.ship.inGameX + app.gameState.ship.x;
+        app.gameState.system_container.y = -app.gameState.ship.inGameY + app.gameState.ship.y;
+        animateShip(app, delta);
+        displayMenus(app);
     });
 
     let world = app.stage
-    let ship = sprites.ship
+    let ship = app.gameState.ship
 
     // Paramètres de zoom
     let zoom = 1;
