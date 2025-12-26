@@ -7,10 +7,8 @@ export function addBackground(app) {
       width: 100000,
       height: 100000,
       anchor: 0.5,
+      zIndex: 1,
     });
 
     app.stage.addChild(tilingSprite);
-    //console.log(app.stage.getChildByName('TilingSprite'));
-    //console.log(app.stage.getChildByName('TilingSprite').texture);
-    //app.stage.getChildByName('TilingSprite').texture = null;
 }

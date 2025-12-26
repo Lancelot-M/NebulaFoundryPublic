@@ -41,7 +41,7 @@ export function addAstero(app) {
           pixi_ore.action_possible = ['moving', 'mining'];
           pixi_ore.eventMode = 'static';
           pixi_ore.cursor = 'pointer';
-          pixi_ore.on('pointerdown', onClick);
+         // pixi_ore.on('pointerdown', onClick);
 
           // Alternatively, use the mouse & touch events:
             // sprite.on('click', onClick); // mouse-only

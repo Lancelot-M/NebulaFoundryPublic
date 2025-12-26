@@ -37,16 +37,19 @@ async function preload() {
 
 // Asynchronous IIFE
 (async () => {
+    // On charge l'app avant d'ajouter les elements
   await setup();
   await preload();
+
+  // On ajouter tous les elements de l'app en emem temps
   addBackground(app);
-  addSystemElement(app);
-  addShip(app);
-  showActionMenu(app);
+   addSystemElement(app);
+   addShip(app);
+   showActionMenu(app);
   makeShipMove(app);
 
 
-  // Add the fish animation callback to the application's ticker.
+  // Add the animation callback to the application's ticker.
   app.ticker.add(
     (delta) => {
         app.gameState.system_container.x = -app.gameState.ship.inGameX + app.gameState.ship.x;

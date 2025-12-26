@@ -9,18 +9,15 @@ export function showActionMenu(app) {
 
     document.getElementById("moving").onclick = () => {
         app.gameState.ship.action = 'moving';
-        app.gameState.ship.target = app.gameState.selected;
     };
 
     document.getElementById("mining").onclick = () => {
         app.gameState.ship.action = 'mining';
-        app.gameState.ship.action_status = 'go_to';
-        app.gameState.ship.target = app.gameState.selected;
+        app.gameState.ship.action_status = 'inactif';
     };
 
     document.getElementById("docking").onclick = () => {
         app.gameState.ship.action = 'docking';
-        app.gameState.ship.target = app.gameState.selected;
     };
 
 }

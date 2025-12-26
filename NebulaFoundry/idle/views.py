@@ -20,7 +20,7 @@ def unload(request, station_id):
 
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
-        station.storage += body.get('storage_max')
+        station.storage += body.get('storage')
         station.save()
 
     except Station.DoesNotExist:

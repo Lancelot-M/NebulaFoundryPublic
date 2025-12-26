@@ -1,6 +1,20 @@
 const { Sprite, Texture, Graphics } = PIXI;
 
-
+export function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
 
 export function addShip(app) {
 
@@ -21,8 +35,8 @@ export function addShip(app) {
     ship.position.set(app.screen.width / 2, app.screen.height / 2);
     ship.inGameX = shipData.pos_x;
     ship.inGameY = shipData.pos_y;
-    ship.action = 'spawned';
-    ship.action_status = 'spawned';
+    ship.action = shipData.action;
+    ship.action_status = shipData.action_status;
     ship.home = null;
     ship.storage_max = shipData.storage_max;
     ship.storage = shipData.storage;
@@ -54,13 +68,12 @@ export function makeShipMove(app) {
     // sprite.on('tap', onClick); // touch-only
     function onClick() {
         app.gameState.selected = this;
-        var html_collection = document.getElementsByClassName('btn-clic');
-        for (var btn of html_collection) {
-                btn.classList.remove('hide');
-                if (this.action_possible.includes(btn.id) == false) {
-                    btn.classList.add('hide');
-                }
-        }
+       // var html_collection = document.getElementsByClassName('btn-clic');
+        //for (var btn of html_collection) {
+          //      btn.classList.remove('hide');
+            //    if (this.action_possible.includes(btn.id) == false) {
+              //      btn.classList.add('hide');
+                //}
     }
 }
 
@@ -79,17 +92,30 @@ export function animateShip(app, time) {
 }
 
 export function dockingShip(app, time) {
-    if (app.gameState.ship.x != app.gameState.ship.target.x || app.gameState.ship.y != app.gameState.ship.target.y) {
+    if (app.gameState.ship.inGameX != app.gameState.station.x || app.gameState.ship.inGameY != app.gameState.station.y) {
         travelingStation(app, time);
     }
-    if (app.gameState.ship.storage < 1) {
-        app.gameState.ship.action = 'inactif';
-        app.gameState.ship.storage = 0;
-    }
+
     else {
-        app.gameState.ship.storage = app.gameState.ship.storage - 1;
-        console.log('Unloading');
-        app.gameState.ship.home.storage = app.gameState.ship.home.storage +  1;
+        app.ticker.stop();
+        // VIDE SOUTE DANS STATION
+        var csrftoken = getCookie('csrftoken');
+        var payload = JSON.stringify({
+                'storage': app.gameState.ship.storage,
+            });
+        var rawResponse = fetch('http://localhost:8000/hangar/unload/1', {
+            method: 'POST',
+            headers: {
+                "X-CSRFToken": csrftoken,
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: payload,
+          });
+
+            console.log(rawResponse);
+
+        window.location.replace("http://localhost:8000/hangar/1");
     }
 
 
@@ -126,7 +152,7 @@ export function miningShip(app, time) {
         }
     }
     else if (app.gameState.ship.action_status == 'actif') {
-        if (app.gameState.ship.storage + app.gameState.ship.minning_speed >= app.gameState.ship.storage_max) {
+        if (app.gameState.ship.storage + app.gameState.ship.minning_speed > app.gameState.ship.storage_max) {
             app.gameState.ship.action_status = 'go_back';
         }
         else {
@@ -136,6 +162,10 @@ export function miningShip(app, time) {
             if (app.gameState.ship.target.storage <= 0) {
                     app.gameState.ship.action_status = 'inactif';
                     var ore_pk = app.gameState.ship.target.pk
+                    app.gameState.ores.delete(ore_pk);
+
+                    
+
                     var removed = app.gameState.system_container.removeChild(app.gameState.ship.target);
                     app.gameState.ship.target = null;
                     var csrftoken = getCookie('csrftoken');
@@ -148,9 +178,6 @@ export function miningShip(app, time) {
                           'Content-Type': 'application/json'
                         },
                     });
-                    console.log(reponse);
-                    console.log(ore_pk);
-                    console.log(removed);
 
             }
         }
@@ -166,15 +193,11 @@ export function miningShip(app, time) {
     else if (app.gameState.ship.action_status == 'landing') {
         if (app.gameState.ship.storage == 0) {
             app.gameState.ship.action_status = 'go_to';
-            console.log('go_to');
         }
-
-        var unload_qty = app.gameState.ship.storage;
-        app.gameState.ship.storage = 0;
         // VIDE SOUTE DANS STATION
         var csrftoken = getCookie('csrftoken');
         var payload = JSON.stringify({
-                'storage_max': unload_qty,
+                'storage': app.gameState.ship.storage,
             });
         var rawResponse = fetch('http://localhost:8000/hangar/unload/1', {
             method: 'POST',
@@ -185,7 +208,7 @@ export function miningShip(app, time) {
             },
             body: payload,
           });
-
+        app.gameState.ship.storage = 0;
         console.log(rawResponse);
 
 
@@ -193,14 +216,20 @@ export function miningShip(app, time) {
     }
     else if (app.gameState.ship.action_status == 'inactif') {
 
-        var new_ore = null;
-        for (var ore of app.gameState.ores) {
-                app.gameState.ship.target = ore[1];
-                app.gameState.ores.delete(ore[0])
-                break;
-        }
+
         if (app.gameState.ship.target) {
+            if (app.gameState.ship.storage >= app.gameState.ship.storage_max / 2) {
+                app.gameState.ship.action_status = 'go_back';
+            }
+            else {
                 app.gameState.ship.action_status = 'go_to';
+            }
+        }
+        else {
+            for (var ore of app.gameState.ores) {
+                app.gameState.ship.target = ore[1];
+                break;
+            }
         }
 
     }

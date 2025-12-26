@@ -28,8 +28,8 @@ class System(models.Model):
             name="ORE",
             storage=10,
             system_id=self,
-            pos_x=random.randrange(center_x + 500, center_x + 1000),
-            pos_y=random.randrange(center_y + 500, center_y + 1000),
+            pos_x=random.randrange(center_x + 500, center_x + 10000),
+            pos_y=random.randrange(center_y + 500, center_y + 10000),
         )
         new_ore.save()
 
@@ -52,7 +52,7 @@ class System(models.Model):
             'ore': serializers.serialize('json', Ore.objects.filter(system_id=self.pk)),
             'stations': serializers.serialize('json', Station.objects.filter(system_id=self.pk)),
             'ship': json.dumps({
-                'speed': 25,
+                'speed': 5,
                 'minning_speed': ship.minning_speed,
                 'pos_x': ship.pos_x,
                 'pos_y': ship.pos_y,
