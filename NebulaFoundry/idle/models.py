@@ -63,6 +63,30 @@ class System(models.Model):
             }),
         }
 
+    def station_data(self):
+        """ Pour le moment on ne prend qu une station plus tard all"""
+        stations = Station.objects.filter(system_id=self.pk)
+        for station in stations:
+            return {
+                'id': station.pk,
+                'pos_x': station.pos_x,
+                'pos_y': station.pos_y,
+            }
+
+    def ores_data(self):
+        """ Pour le moment on ne prend qu une station plus tard all"""
+        ores = Ore.objects.filter(system_id=self.pk)
+        ores_data = {}
+        for ore in ores:
+            ores_data.update({
+                str(ore.pk): {
+                    'id': ore.pk,
+                    'pos_x': ore.pos_x,
+                    'pos_y': ore.pos_y,
+                },
+            })
+        return ores_data
+
 
 # Create your models here.
 class Ship(models.Model):
@@ -76,6 +100,13 @@ class Ship(models.Model):
     system_target = models.CharField('Cible', default="")
     pos_x = models.IntegerField(default=0)
     pos_y = models.IntegerField(default=0)
+
+    def player_data(self):
+        return {
+                'id': self.pk,
+                'pos_x': self.pos_x,
+                'pos_y': self.pos_y,
+        }
 
 
 

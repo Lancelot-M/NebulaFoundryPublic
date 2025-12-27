@@ -1,9 +1,9 @@
 # Create your views here.
 from django.shortcuts import render
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 import json
 
-from .models import Station, System, Ore
+from .models import Station, System, Ore, Ship
 
 
 # ...
@@ -50,4 +50,20 @@ def home(request):
 
 def system(request):
     return render(request, "idle/system.html", {})
+
+def system_station(request, system_id):
+    system = System.objects.get(pk=system_id)
+    data = system.station_data()
+    return JsonResponse(data)
+
+def system_ores(request, system_id):
+    system = System.objects.get(pk=system_id)
+    data = system.ores_data()
+    return JsonResponse(data)
+
+def my_ship(request):
+    # ship = SpaceShip.objects.get(player=request.user)
+    ship = Ship.objects.get(pk=5)
+    data = ship.player_data()
+    return JsonResponse(ship.player_data())
 
