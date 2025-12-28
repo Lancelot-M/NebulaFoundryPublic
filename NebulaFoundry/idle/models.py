@@ -3,6 +3,9 @@ import random
 from django.core import serializers
 import logging
 import json
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+import math
 
 logger = logging.getLogger(__name__)
 
@@ -88,18 +91,47 @@ class System(models.Model):
         return ores_data
 
 
-# Create your models here.
+class Station(models.Model):
+    name = models.CharField('Nom')
+    storage = models.IntegerField(default=0)
+    system_location = models.CharField('Cible')
+    pos_x = models.IntegerField(default=0)
+    pos_y = models.IntegerField(default=0)
+    system_id = models.ForeignKey(System, on_delete=models.CASCADE, default=1)
+
+
 class Ship(models.Model):
+    """
+       Un ship suit un ordre donnée par le joueur ( miner, explorer, combattre, transporter ...)
+       Un ordre peut etre donnée depuis une station
+       Un ordre peut être annulé >>> le ship revient en station
+   """
     storage_max = models.IntegerField(default=0)
     storage_now = models.IntegerField(default=0)
     minning_speed = models.IntegerField(default=0)
     speed = models.IntegerField(default=0)
     action_order = models.CharField('Ordre donné', default="")
     action_now = models.CharField('Action en cours', default="")
-    home_station = models.CharField('Home', default="")
-    system_target = models.CharField('Cible', default="")
+
+
     pos_x = models.IntegerField(default=0)
     pos_y = models.IntegerField(default=0)
+    system_fk = models.ForeignKey(System, on_delete=models.CASCADE, default=1)
+    station_fk = models.ForeignKey(Station, on_delete=models.CASCADE, default=1)
+    # Target générique - peut pointer vers Ore, Station, Ship, etc.
+    target_content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='targeted_by_ships'
+    )
+    target_object_id = models.PositiveIntegerField(null=True, blank=True)
+    target = GenericForeignKey('target_content_type', 'target_object_id')
+
+    # DELETE
+    home_station = models.CharField('Home', default="")
+    system_target = models.CharField('Cible', default="")
 
     def player_data(self):
         return {
@@ -108,15 +140,44 @@ class Ship(models.Model):
                 'pos_y': self.pos_y,
         }
 
+    def play_tic(self):
+        if self.action_now == 'moving':
+            self.action_move()
+        elif self.action_now == 'mining':
+            pass
+        elif self.action_now == 'landing':
+            pass
+        self.save()
+        return self.generate_rst()
+
+    def calcul_action_now(self):
+        # self.action_order == 'minning':
+        if not self.target:
+            if self.storage_max == self.storage_now:
+                self.target = self.station_fk
 
 
-class Station(models.Model):
-    name = models.CharField('Nom')
-    storage = models.IntegerField(default=0)
-    system_location = models.CharField('Cible')
-    pos_x = models.IntegerField(default=0)
-    pos_y = models.IntegerField(default=0)
-    system_id = models.ForeignKey(System, on_delete=models.CASCADE, default=1)
+
+    def action_move(self):
+        if not self.target or (self.target.pos_x == self.pos_x and self.target.pos_y == self.pos_y):
+            self.calcul_action_now()
+        else:
+            self.move_ship()
+
+    def move_ship(self):
+        delta_x = self.target.pos_x - self.pos_x
+        delta_y = self.target.pos_y - self.pos_y
+        vecteur_x = delta_x / math.hypot(delta_x, delta_y)
+        vecteur_y = delta_y / math.hypot(delta_x, delta_y)
+        self.pos_x = vecteur_x * self.speed
+        self.pos_y = vecteur_y * self.speed
+
+
+
+
+
+
+
 
 
 
@@ -136,6 +197,71 @@ class Ore(models.Model):
         except Ore.DoesNotExist:
             Ore_number = 0
         return Ore_number
+
+
+class ReportSystem(models.Model):
+    """
+    Représente les actions déroulées dans le système lors du dernier tic.
+    Ne générer des rapport que s'il se passe qqchose
+    Pour le moment le rapport suit les actions d'un ship voir comment on evolue ( npc / evenement ? )
+    """
+    name = models.CharField('Nom')
+    system_fk = models.ForeignKey(System, on_delete=models.CASCADE, default=1)
+
+    @classmethod
+    def create_report(cls, system_fk):
+        report_system = cls(system_fk=system_fk)
+        report_system._generate_report()
+        return report_system
+
+    def _generate_report(self):
+        for tic in range(0, 9):
+            ships = Ship.objects.filter(system_id=self.system_fk)
+            for ship in ships:
+                ship.play_tic()
+                ReportSystemTic.create_rst(self, ship)
+
+
+
+        # ores = Ore.objects.filter(system_id=self.system_fk)
+
+    # def scheduling_reporting(self):
+    #
+    #     while True:
+    #         # Code executed here
+    #         time.sleep(60)
+
+
+class ReportSystemTic(models.Model):
+    """
+    Représente une faction d'un rapport pour un ship ( 1 sec / fracction / ship ?)
+
+    Format d'un tic: {
+        "pos_x": x,
+        "pos_y": y,
+        "action_now": "moving/mining/loading/docking...."
+    }
+    """
+    number = models.Integer('Numero de tic pour le meme ship / rapport')
+    report_fk = models.ForeignKey(ReportSystem, on_delete=models.CASCADE, default=1)
+    ship_fk = models.ForeignKey(Ship, on_delete=models.CASCADE, default=1)
+    pos_x = models.IntegerField()
+    pos_y = models.IntegerField()
+    action_now = models.CharField()
+
+    @classmethod
+    def create_rst(cls, report_system, ship):
+        return cls(
+            report_fk=report_system.pk,
+            ship_fk=ship.ship_fk,
+            pos_x=ship.pos_x,
+            pos_y=ship.pos_y,
+            action_now=ship.action_now
+        )
+
+
+
+
 
 
 
