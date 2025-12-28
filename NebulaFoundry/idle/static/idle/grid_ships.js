@@ -6,8 +6,8 @@ export async function get_ships_methods(app) {
     Appels les fonctionnalitées liées aux spaceships
      Fonction de lancement de l'app.
     */
-    get_ships_mapper(app);
     await get_my_ship(app);
+    get_ships_mapper(app);
 }
 
 export function get_ships_mapper(app) {

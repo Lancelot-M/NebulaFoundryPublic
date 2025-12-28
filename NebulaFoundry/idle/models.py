@@ -144,25 +144,24 @@ class Ship(models.Model):
         if self.action_order == 'moving':
             self.action_move()
         elif self.action_order == 'mining':
-            pass
+            self.action_move()
         elif self.action_order == 'landing':
             pass
 #        self.save()
-        return self.generate_rst()
 
     def calcul_action_now(self):
         # self.action_order == 'minning':
         # TEST
-        if self.storage_now != 0:
+        if self.storage_now == 0:
             self.target = self.station_fk
-            self.storage_now = 0
+            self.storage_now = self.storage_max
         else:
             self.target = self.get_first_ore()
-            self.storage_now = self.storage_max
+            self.storage_now = 0
 
     def get_first_ore(self):
         """Retourne le premier cailloux trouvé dans le systeme"""
-        ore = Ore.objects.get(system_id=self.system_fk.pk)
+        ore = Ore.objects.filter(system_id=self.system_fk.pk)[0]
         return ore
 
 
@@ -172,14 +171,29 @@ class Ship(models.Model):
             self.calcul_action_now()
         else:
             self.move_ship()
+        if self.action_now != 'moving':
+            self.action_now = 'moving'
 
     def move_ship(self):
+        """
+        Déplace le ship en direction de sa cible.
+        """
         delta_x = self.target.pos_x - self.pos_x
         delta_y = self.target.pos_y - self.pos_y
         vecteur_x = delta_x / math.hypot(delta_x, delta_y)
         vecteur_y = delta_y / math.hypot(delta_x, delta_y)
-        self.pos_x = vecteur_x * self.speed
-        self.pos_y = vecteur_y * self.speed
+        step_x = round(vecteur_x * self.speed)
+        step_y = round(vecteur_y * self.speed)
+        if (step_x > 0 and self.pos_x + step_x > self.target.pos_x) or \
+                (step_x < 0 and self.pos_x + step_x < self.target.pos_x):
+            self.pos_x = self.target.pos_x
+        else:
+            self.pos_x += step_x
+        if (step_y > 0 and self.pos_y + step_y > self.target.pos_y) or \
+                (step_y < 0 and self.pos_y + step_y < self.target.pos_y):
+            self.pos_y = self.target.pos_y
+        else:
+            self.pos_y += step_y
 
 
 
@@ -207,25 +221,72 @@ class ReportSystem(models.Model):
     Ne générer des rapport que s'il se passe qqchose
     Pour le moment le rapport suit les actions d'un ship voir comment on evolue ( npc / evenement ? )
     """
-    name = models.CharField('Nom')
-    system_fk = models.ForeignKey(System, on_delete=models.CASCADE, default=1)
+    name = models.CharField('Nom', null=True)
+    system_fk = models.ForeignKey(System, on_delete=models.CASCADE, null=True)
+    # Juste le dict pré-calculé, c'est suffisant !
+    cached_dict = models.JSONField(null=True)
 
     @classmethod
     def create_report(cls, system_fk):
-        report_system = cls(system_fk=system_fk)
+        report_system = cls(system_fk=System.objects.get(pk=system_fk))
+        report_system.save()
         report_system._generate_report()
-        return {"test": 1}
+        return report_system
 
     def _generate_report(self):
-        for tic in range(0, 9):
-            ships = Ship.objects.filter(system_id=self.system_fk)
+        for tic in range(0, 15):
+            ships = Ship.objects.filter(system_fk=self.system_fk.pk)
             for ship in ships:
                 ship.play_tic()
-                ReportSystemTic.create_rst(self, ship)
+                ship.save()
+                self.reportsystemtic_set.create(
+                    number=tic,
+                    ship_fk=ship,
+                    pos_x=ship.pos_x,
+                    pos_y=ship.pos_y,
+                    action_now=ship.action_now,
+                    storage=ship.storage_now,
+                    target_model=ship.target_content_type.model,
+                    target_id=ship.target_object_id,
+                )
 
 
 
         # ores = Ore.objects.filter(system_id=self.system_fk)
+
+    def data_dict(self):
+        if self.cached_dict is None:
+            cached_dict = {
+                'id': self.pk,
+                'system_fk': self.system_fk.pk,
+                'name': self.name,
+                'rst_ships': {},
+            }
+            for rst in self.reportsystemtic_set.all():
+                if rst.ship_fk.pk not in cached_dict['rst_ships']:
+                    cached_dict['rst_ships'][rst.ship_fk.pk] = {
+                        rst.number : {
+                            'pos_x': rst.pos_x,
+                            'pos_y': rst.pos_y,
+                            'action_now': rst.action_now,
+                            'storage': rst.storage,
+                            'target_model': rst.target_model,
+                            'target_id': rst.target_id,
+                        }
+                    }
+                else:
+                    cached_dict['rst_ships'][rst.ship_fk.pk].update({
+                        rst.number: {
+                            'pos_x': rst.pos_x,
+                            'pos_y': rst.pos_y,
+                            'action_now': rst.action_now,
+                            'storage': rst.storage,
+                            'target_model': rst.target_model,
+                            'target_id': rst.target_id,
+                        }
+                    })
+            self.cached_dict = cached_dict
+        return self.cached_dict
 
     # def scheduling_reporting(self):
     #
@@ -244,17 +305,20 @@ class ReportSystemTic(models.Model):
         "action_now": "moving/mining/loading/docking...."
     }
     """
-    number = models.IntegerField('Numero de tic pour le meme ship / rapport')
-    report_fk = models.ForeignKey(ReportSystem, on_delete=models.CASCADE, default=1)
-    ship_fk = models.ForeignKey(Ship, on_delete=models.CASCADE, default=1)
-    pos_x = models.IntegerField()
-    pos_y = models.IntegerField()
-    action_now = models.CharField()
+    number = models.IntegerField('Numero de tic pour le meme ship / rapport', null=True)
+    report_fk = models.ForeignKey(ReportSystem, on_delete=models.CASCADE, null=True)
+    ship_fk = models.ForeignKey(Ship, on_delete=models.CASCADE, null=True)
+    pos_x = models.IntegerField(null=True)
+    pos_y = models.IntegerField(null=True)
+    action_now = models.CharField(null=True)
+    storage = models.IntegerField(null=True)
+    target_model = models.CharField(null=True)
+    target_id = models.IntegerField(null=True)
+
 
     @classmethod
-    def create_rst(cls, report_system, ship):
+    def create_rst(cls, ship):
         return cls(
-            report_fk=report_system.pk,
             ship_fk=ship.ship_fk,
             pos_x=ship.pos_x,
             pos_y=ship.pos_y,

@@ -3,6 +3,7 @@ import { addBackground } from './addbackground.js';
 import { get_ships_methods } from './grid_ships.js';
 import { get_stations } from './grid_stations.js';
 import { get_ores } from './grid_ores.js';
+import { animate_with_report, get_system_report } from './grid_reports.js';
 
 
 var app = new Application();
@@ -17,6 +18,10 @@ async function init_scene() {
     app.game_items.grid.zIndex = 100;
     app.game_items.grid.sortableChildren = true;
     app.stage.addChild(app.game_items.grid);
+    app.reporting_management = {}
+    app.reporting_management.report = {};
+    app.reporting_management.delta = 0;
+    app.reporting_management.tic_number = 0;
 }
 // Chargement des assets
 async function load_assets() {
@@ -69,6 +74,12 @@ function center_grid(app) {
     app.game_items.grid.x = -app.game_items.player.pixi.x + app.screen.width / 2;
     app.game_items.grid.y = -app.game_items.player.pixi.y + app.screen.height / 2;
 }
+// Gestion du tic
+function manage_tics(app) {
+    app.reporting_management.delta += 1;
+    app.reporting_management.tic_number = Math.floor(app.reporting_management.delta / 60);
+}
+
 
 // --------------------------------------------
 // Affichage de l'interface en Asynchronous IIFE
@@ -83,11 +94,17 @@ function center_grid(app) {
     await get_stations(app);
     await get_ores(app);
     load_zoom(app);
+
     // Add the animation callback to the application's ticker.
+    app.reporting_delta = 0
     app.ticker.add(
-    (delta) => {
-        center_grid(app);
-        console.log(`Delta Time: ${ticker.deltaTime}`);
-    });
+        (delta) => {
+            // Incrémentation du ticker
+            manage_tics(app);
+            center_grid(app);
+            get_system_report(app);
+            animate_with_report(app);
+        }
+    );
 })();
 // --------------------------------------------

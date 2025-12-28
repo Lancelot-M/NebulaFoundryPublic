@@ -68,5 +68,5 @@ def my_ship(request):
 
 def system_report(request, system_fk):
     report_system = ReportSystem.create_report(system_fk)
-    return JsonResponse(report_system)
+    return JsonResponse(report_system.data_dict())
 
