@@ -87,6 +87,7 @@ function center_grid(app) {
     app.ticker.add(
     (delta) => {
         center_grid(app);
+        console.log(`Delta Time: ${ticker.deltaTime}`);
     });
 })();
 // --------------------------------------------

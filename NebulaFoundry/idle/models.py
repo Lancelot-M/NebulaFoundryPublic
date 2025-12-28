@@ -141,20 +141,29 @@ class Ship(models.Model):
         }
 
     def play_tic(self):
-        if self.action_now == 'moving':
+        if self.action_order == 'moving':
             self.action_move()
-        elif self.action_now == 'mining':
+        elif self.action_order == 'mining':
             pass
-        elif self.action_now == 'landing':
+        elif self.action_order == 'landing':
             pass
-        self.save()
+#        self.save()
         return self.generate_rst()
 
     def calcul_action_now(self):
         # self.action_order == 'minning':
-        if not self.target:
-            if self.storage_max == self.storage_now:
-                self.target = self.station_fk
+        # TEST
+        if self.storage_now != 0:
+            self.target = self.station_fk
+            self.storage_now = 0
+        else:
+            self.target = self.get_first_ore()
+            self.storage_now = self.storage_max
+
+    def get_first_ore(self):
+        """Retourne le premier cailloux trouvé dans le systeme"""
+        ore = Ore.objects.get(system_id=self.system_fk.pk)
+        return ore
 
 
 
@@ -171,13 +180,6 @@ class Ship(models.Model):
         vecteur_y = delta_y / math.hypot(delta_x, delta_y)
         self.pos_x = vecteur_x * self.speed
         self.pos_y = vecteur_y * self.speed
-
-
-
-
-
-
-
 
 
 
@@ -212,7 +214,7 @@ class ReportSystem(models.Model):
     def create_report(cls, system_fk):
         report_system = cls(system_fk=system_fk)
         report_system._generate_report()
-        return report_system
+        return {"test": 1}
 
     def _generate_report(self):
         for tic in range(0, 9):
@@ -242,7 +244,7 @@ class ReportSystemTic(models.Model):
         "action_now": "moving/mining/loading/docking...."
     }
     """
-    number = models.Integer('Numero de tic pour le meme ship / rapport')
+    number = models.IntegerField('Numero de tic pour le meme ship / rapport')
     report_fk = models.ForeignKey(ReportSystem, on_delete=models.CASCADE, default=1)
     ship_fk = models.ForeignKey(Ship, on_delete=models.CASCADE, default=1)
     pos_x = models.IntegerField()

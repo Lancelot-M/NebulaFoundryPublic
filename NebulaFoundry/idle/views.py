@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.http import Http404, HttpResponse, JsonResponse
 import json
 
-from .models import Station, System, Ore, Ship
+from .models import Station, System, Ore, Ship, ReportSystem
 
 
 # ...
@@ -64,6 +64,9 @@ def system_ores(request, system_id):
 def my_ship(request):
     # ship = SpaceShip.objects.get(player=request.user)
     ship = Ship.objects.get(pk=5)
-    data = ship.player_data()
     return JsonResponse(ship.player_data())
+
+def system_report(request, system_fk):
+    report_system = ReportSystem.create_report(system_fk)
+    return JsonResponse(report_system)
 
