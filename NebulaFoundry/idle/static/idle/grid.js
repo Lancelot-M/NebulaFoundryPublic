@@ -3,7 +3,7 @@ import { addBackground } from './addbackground.js';
 import { get_ships_methods } from './grid_ships.js';
 import { get_stations } from './grid_stations.js';
 import { get_ores } from './grid_ores.js';
-import { animate_with_report, get_system_report } from './grid_reports.js';
+import { isEmpty, animate_with_report, app_reporting_manager } from './grid_reports.js';
 
 
 var app = new Application();
@@ -13,14 +13,19 @@ async function init_scene() {
     await app.init({ background: '#1099bb', resizeTo: document.getElementById('scene-container')});
     document.getElementById('scene-container').appendChild(app.canvas);
     app.stage.sortableChildren = true;
+    // PIXI PART
     app.game_items = {};
     app.game_items.grid = new Container();
     app.game_items.grid.zIndex = 100;
     app.game_items.grid.sortableChildren = true;
     app.stage.addChild(app.game_items.grid);
+
+    // SYNCH PART
     app.reporting_management = {}
-    app.reporting_management.report = {};
-    app.reporting_management.delta = 0;
+    app.reporting_management.actual_report = {};
+    app.reporting_management.next_report = {};
+    app.reporting_management.synchronisation_pending = false;
+    app.reporting_management.tic_duration = 2;
     app.reporting_management.tic_number = 0;
 }
 // Chargement des assets
@@ -74,11 +79,6 @@ function center_grid(app) {
     app.game_items.grid.x = -app.game_items.player.pixi.x + app.screen.width / 2;
     app.game_items.grid.y = -app.game_items.player.pixi.y + app.screen.height / 2;
 }
-// Gestion du tic
-function manage_tics(app) {
-    app.reporting_management.delta += 1;
-    app.reporting_management.tic_number = Math.floor(app.reporting_management.delta / 60);
-}
 
 
 // --------------------------------------------
@@ -100,10 +100,21 @@ function manage_tics(app) {
     app.ticker.add(
         (delta) => {
             // Incrémentation du ticker
-            manage_tics(app);
+            // manage_tics(app);
             center_grid(app);
-            get_system_report(app);
-            animate_with_report(app);
+            if (app.reporting_management.synchronisation_pending == false) {
+                //console.log("synchronisation_pending : pas encore set")
+                app_reporting_manager(app);
+            }
+            else {
+                //console.log("synchronisation_pending : escape app_reporting_manager")
+            }
+            if (isEmpty(app.reporting_management.actual_report) == false) {
+                animate_with_report(app);
+            }
+            else {
+                //console.log("Rapport vide !");
+            }
         }
     );
 })();

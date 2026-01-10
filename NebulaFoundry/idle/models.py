@@ -5,7 +5,11 @@ import logging
 import json
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
+
 import math
+from datetime import timedelta
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +20,33 @@ class System(models.Model):
     name = models.CharField('Nom')
     width = models.IntegerField('Largeur du system')
     height = models.IntegerField('Hauteur du system')
+    report_time_duration = models.IntegerField('Durée de chaque report en secondes', default=10)
 
+    def get_report_system(self):
+        now = timezone.now()
+        try:
+            report_system = ReportSystem.objects.exclude(time_start__lt=now).exclude(time_stop__gt=now).filter(system_fk=self.pk).get()
+        except ObjectDoesNotExist:
+            report_system = ReportSystem.create_report(self, now)
+        except:
+            # aaaa = [('start', r.time_start.minute, ':', r.time_start.second, 'stop', r.time_stop.minute, ':', r.time_stop.second) for r in
+            #  ReportSystem.objects.exclude(time_stop__lt=now).exclude(time_start__gt=now)]
+            raise 'ZAAAA'
+
+        next_date_start = report_system.time_stop + timedelta(seconds=1)
+        try:
+            next_report = ReportSystem.objects.get(time_start=next_date_start, system_fk=self.pk)
+        except ObjectDoesNotExist:
+            next_report = ReportSystem.create_report(self, next_date_start)
+        except:
+            raise 'ZAAAA'
+
+        # logger.info(f"report_system: {(report_system.time_start.second, report_system.time_stop.second)}, next_report: {(next_report.time_start.second, next_report.time_stop.second)} ")
+        return {
+            # 'serv_now': timezone.localtime(),
+            'actual_report': report_system.data_dict(),
+            'next_report': next_report.data_dict(),
+        }
 
     def generate_ore(self):
         """
@@ -196,7 +226,6 @@ class Ship(models.Model):
             self.pos_y += step_y
 
 
-
 class Ore(models.Model):
     name = models.CharField('Nom')
     storage = models.IntegerField(default=0)
@@ -225,21 +254,33 @@ class ReportSystem(models.Model):
     system_fk = models.ForeignKey(System, on_delete=models.CASCADE, null=True)
     # Juste le dict pré-calculé, c'est suffisant !
     cached_dict = models.JSONField(null=True)
+    time_start = models.DateTimeField(default=timezone.now())
+    time_stop = models.DateTimeField(default=timezone.now())
+
 
     @classmethod
-    def create_report(cls, system_fk):
-        report_system = cls(system_fk=System.objects.get(pk=system_fk))
+    def create_report(cls, system, time_start):
+        report_system = ReportSystem(
+            system_fk=system,
+            time_start=time_start,
+            time_stop=time_start + timedelta(seconds=system.report_time_duration),
+        )
         report_system.save()
         report_system._generate_report()
+        report_system.save()
         return report_system
 
     def _generate_report(self):
-        for tic in range(0, 15):
+        # Permet de moduler la frequence des tics pour chaque system ? bien ou pas bien ^^
+        report_time_duration = self.system_fk.report_time_duration
+        for tic in range(1, report_time_duration + 1):
+            timestamp = self.time_start + timedelta(seconds=tic)
             ships = Ship.objects.filter(system_fk=self.system_fk.pk)
             for ship in ships:
                 ship.play_tic()
                 ship.save()
                 self.reportsystemtic_set.create(
+                    timestamp=timestamp,
                     number=tic,
                     ship_fk=ship,
                     pos_x=ship.pos_x,
@@ -250,8 +291,6 @@ class ReportSystem(models.Model):
                     target_id=ship.target_object_id,
                 )
 
-
-
         # ores = Ore.objects.filter(system_id=self.system_fk)
 
     def data_dict(self):
@@ -261,11 +300,13 @@ class ReportSystem(models.Model):
                 'system_fk': self.system_fk.pk,
                 'name': self.name,
                 'rst_ships': {},
+                'time_start': self.time_start,
+                'time_stop': self.time_stop,
             }
             for rst in self.reportsystemtic_set.all():
                 if rst.ship_fk.pk not in cached_dict['rst_ships']:
                     cached_dict['rst_ships'][rst.ship_fk.pk] = {
-                        rst.number : {
+                        str(round(rst.timestamp.timestamp())) : {
                             'pos_x': rst.pos_x,
                             'pos_y': rst.pos_y,
                             'action_now': rst.action_now,
@@ -276,7 +317,7 @@ class ReportSystem(models.Model):
                     }
                 else:
                     cached_dict['rst_ships'][rst.ship_fk.pk].update({
-                        rst.number: {
+                        str(round(rst.timestamp.timestamp())): {
                             'pos_x': rst.pos_x,
                             'pos_y': rst.pos_y,
                             'action_now': rst.action_now,
@@ -306,6 +347,7 @@ class ReportSystemTic(models.Model):
     }
     """
     number = models.IntegerField('Numero de tic pour le meme ship / rapport', null=True)
+    timestamp = models.DateTimeField(default=timezone.now)
     report_fk = models.ForeignKey(ReportSystem, on_delete=models.CASCADE, null=True)
     ship_fk = models.ForeignKey(Ship, on_delete=models.CASCADE, null=True)
     pos_x = models.IntegerField(null=True)

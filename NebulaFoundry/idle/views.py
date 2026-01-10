@@ -67,6 +67,8 @@ def my_ship(request):
     return JsonResponse(ship.player_data())
 
 def system_report(request, system_fk):
-    report_system = ReportSystem.create_report(system_fk)
-    return JsonResponse(report_system.data_dict())
+    system = System.objects.get(pk=system_fk)
+    report_system = system.get_report_system()
+    #report_system = ReportSystem.create_report(system_fk)
+    return JsonResponse(report_system)
 
