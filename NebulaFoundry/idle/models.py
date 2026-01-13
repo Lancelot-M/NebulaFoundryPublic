@@ -15,6 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 
+ # 10 >>> 15
+ # 16 >>> 21
+
+
 
 class System(models.Model):
     name = models.CharField('Nom')
@@ -24,10 +28,26 @@ class System(models.Model):
 
     def get_report_system(self):
         now = timezone.now()
+        logger.info(f"get_report_system: {now.second} ")
         try:
-            report_system = ReportSystem.objects.exclude(time_start__lt=now).exclude(time_stop__gt=now).filter(system_fk=self.pk).get()
+            report_system = ReportSystem.objects.filter(time_start__lte=now, time_stop__gte=now, system_fk=self.pk).get()
         except ObjectDoesNotExist:
+            logger.info(f"CREATE REPORT")
             report_system = ReportSystem.create_report(self, now)
+        except:
+            # aaaa = [('start', r.time_start.minute, ':', r.time_start.second, 'stop', r.time_stop.minute, ':', r.time_stop.second) for r in
+            #  ReportSystem.objects.exclude(time_stop__lt=now).exclude(time_start__gt=now)]
+            raise 'ZAAAA'
+        return report_system.data_dict()
+
+    def get_system_next_report(self):
+        now = timezone.now()
+        logger.info(f"get_report_system: {now.second} ")
+        try:
+            report_system = ReportSystem.objects.filter(time_stop__gte=now, system_fk=self.pk).get()
+        except ObjectDoesNotExist:
+            raise f"NO REPORT REPORT"
+            # report_system = ReportSystem.create_report(self, now)
         except:
             # aaaa = [('start', r.time_start.minute, ':', r.time_start.second, 'stop', r.time_stop.minute, ':', r.time_stop.second) for r in
             #  ReportSystem.objects.exclude(time_stop__lt=now).exclude(time_start__gt=now)]
@@ -37,16 +57,13 @@ class System(models.Model):
         try:
             next_report = ReportSystem.objects.get(time_start=next_date_start, system_fk=self.pk)
         except ObjectDoesNotExist:
+            logger.info(f"CREATE NEXT REPORT")
             next_report = ReportSystem.create_report(self, next_date_start)
         except:
             raise 'ZAAAA'
 
-        # logger.info(f"report_system: {(report_system.time_start.second, report_system.time_stop.second)}, next_report: {(next_report.time_start.second, next_report.time_stop.second)} ")
-        return {
-            # 'serv_now': timezone.localtime(),
-            'actual_report': report_system.data_dict(),
-            'next_report': next_report.data_dict(),
-        }
+        logger.info(f"report_system: {(report_system.time_start.second, report_system.time_stop.second)}, next_report: {(next_report.time_start.second, next_report.time_stop.second)} ")
+        return next_report.data_dict()
 
     def generate_ore(self):
         """
@@ -214,9 +231,11 @@ class Ship(models.Model):
         vecteur_y = delta_y / math.hypot(delta_x, delta_y)
         step_x = round(vecteur_x * self.speed)
         step_y = round(vecteur_y * self.speed)
+        # logger.info(f"{step_x} STEP X")
         if (step_x > 0 and self.pos_x + step_x > self.target.pos_x) or \
                 (step_x < 0 and self.pos_x + step_x < self.target.pos_x):
             self.pos_x = self.target.pos_x
+            logger.info(f"POS X {self.pos_x}   TARGET X {self.target.pos_x}")
         else:
             self.pos_x += step_x
         if (step_y > 0 and self.pos_y + step_y > self.target.pos_y) or \
@@ -263,7 +282,7 @@ class ReportSystem(models.Model):
         report_system = ReportSystem(
             system_fk=system,
             time_start=time_start,
-            time_stop=time_start + timedelta(seconds=system.report_time_duration),
+            time_stop=time_start + timedelta(seconds=system.report_time_duration - 1),
         )
         report_system.save()
         report_system._generate_report()
@@ -273,7 +292,7 @@ class ReportSystem(models.Model):
     def _generate_report(self):
         # Permet de moduler la frequence des tics pour chaque system ? bien ou pas bien ^^
         report_time_duration = self.system_fk.report_time_duration
-        for tic in range(1, report_time_duration + 1):
+        for tic in range(0, report_time_duration):
             timestamp = self.time_start + timedelta(seconds=tic)
             ships = Ship.objects.filter(system_fk=self.system_fk.pk)
             for ship in ships:

@@ -72,3 +72,8 @@ def system_report(request, system_fk):
     #report_system = ReportSystem.create_report(system_fk)
     return JsonResponse(report_system)
 
+def get_system_next_report(request, system_fk):
+    system = System.objects.get(pk=system_fk)
+    report_system = system.get_system_next_report()
+    return JsonResponse(report_system)
+

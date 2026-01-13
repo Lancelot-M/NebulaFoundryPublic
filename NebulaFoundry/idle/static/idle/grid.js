@@ -104,13 +104,14 @@ function center_grid(app) {
             center_grid(app);
             if (app.reporting_management.synchronisation_pending == false) {
                 //console.log("synchronisation_pending : pas encore set")
-                app_reporting_manager(app);
+                app_reporting_manager(app, delta);
             }
             else {
                 //console.log("synchronisation_pending : escape app_reporting_manager")
             }
             if (isEmpty(app.reporting_management.actual_report) == false) {
-                animate_with_report(app);
+
+                animate_with_report(app, delta);
             }
             else {
                 //console.log("Rapport vide !");

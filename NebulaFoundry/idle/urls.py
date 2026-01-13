@@ -12,4 +12,5 @@ urlpatterns = [
     path("system_ores/<int:system_id>", views.system_ores, name="get ores"),
     path("my_ship/", views.my_ship, name="player data"),
     path("system_report/<int:system_fk>", views.system_report, name="get report"),
+    path("system_next_report/<int:system_fk>", views.get_system_next_report, name="get next report"),
 ]
