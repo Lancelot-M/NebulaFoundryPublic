@@ -3,29 +3,9 @@ from django.shortcuts import render
 from django.http import Http404, HttpResponse, JsonResponse
 import json
 
-from .models import Station, System, Ore, Ship, ReportSystem
+from .models import System, Ore, Ship, ReportSystem
 
 
-# ...
-def hangar(request, station_id):
-    try:
-        station = Station.objects.get(pk=station_id)
-    except Station.DoesNotExist:
-        raise Http404("Station does not exist")
-    return render(request, "idle/hangar.html", {"station": station})
-
-def unload(request, station_id):
-    try:
-        station = Station.objects.get(pk=station_id)
-
-        body_unicode = request.body.decode('utf-8')
-        body = json.loads(body_unicode)
-        station.storage += body.get('storage')
-        station.save()
-
-    except Station.DoesNotExist:
-        raise Http404("Station does not exist")
-    return HttpResponse("Chargement déposé")
 
 def delete_ore(request, ore_id):
     try:
@@ -33,7 +13,7 @@ def delete_ore(request, ore_id):
 
         ore.delete()
 
-    except Station.DoesNotExist:
+    except Ore.DoesNotExist:
         raise Http404("Ore does not exist")
     except Exception as e:
         raise e

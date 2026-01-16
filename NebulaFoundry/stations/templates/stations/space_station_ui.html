@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station Spatiale - Interface</title>
+
+
+    {% load static %}
+    <script type="module" src="{% static 'stations/stations_main.js' %}"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #e0e6ed;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Layout principal */
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Menu latéral */
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #1a1f3a 0%, #0f1322 100%);
+            border-right: 2px solid #2a3f5f;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .station-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #2a3f5f 0%, #1a2940 100%);
+            border-bottom: 2px solid #3a5f8f;
+        }
+
+        .station-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4fc3f7;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(79, 195, 247, 0.5);
+        }
+
+        .station-type {
+            font-size: 12px;
+            color: #90a4ae;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Navigation */
+        .nav-menu {
+            flex: 1;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            margin: 5px 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(79, 195, 247, 0.1);
+            border-color: #4fc3f7;
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(79, 195, 247, 0.2) 0%, rgba(79, 195, 247, 0.05) 100%);
+            border-left: 3px solid #4fc3f7;
+            color: #4fc3f7;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .nav-label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Badge de notification */
+        .nav-badge {
+            margin-left: auto;
+            background: #ff5252;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        /* Zone de contenu principale */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header optionnel (haut d'écran) */
+        .top-header {
+            background: rgba(26, 31, 58, 0.8);
+            padding: 15px 30px;
+            border-bottom: 1px solid #2a3f5f;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-left {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .resource-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: rgba(79, 195, 247, 0.1);
+            border-radius: 6px;
+            border: 1px solid rgba(79, 195, 247, 0.3);
+        }
+
+        .resource-icon {
+            color: #ffd740;
+        }
+
+        .resource-value {
+            font-weight: bold;
+            color: #4fc3f7;
+        }
+
+        /* Zone de contenu */
+        .content-area {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .content-panel {
+            display: none;
+        }
+
+        .content-panel.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Titre de section */
+        .section-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #4fc3f7;
+            border-bottom: 2px solid #2a3f5f;
+            padding-bottom: 10px;
+        }
+
+        /* Cartes */
+        .card {
+            background: linear-gradient(135deg, rgba(42, 63, 95, 0.4) 0%, rgba(26, 31, 58, 0.4) 100%);
+            border: 1px solid #2a3f5f;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #90caf9;
+        }
+
+        /* Grille d'actions */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .action-card {
+            background: linear-gradient(135deg, rgba(42, 63, 95, 0.6) 0%, rgba(26, 31, 58, 0.6) 100%);
+            border: 1px solid #2a3f5f;
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            border-color: #4fc3f7;
+            box-shadow: 0 8px 20px rgba(79, 195, 247, 0.3);
+        }
+
+        .action-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .action-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #4fc3f7;
+        }
+
+        .action-desc {
+            font-size: 12px;
+            color: #90a4ae;
+        }
+
+        /* Boutons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4fc3f7 0%, #2196f3 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 195, 247, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #66bb6a 0%, #43a047 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef5350 0%, #e53935 100%);
+            color: white;
+        }
+
+        /* Liste de ships */
+        .ship-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .ship-item {
+            background: rgba(42, 63, 95, 0.3);
+            border: 1px solid #2a3f5f;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .ship-item:hover {
+            border-color: #4fc3f7;
+            background: rgba(79, 195, 247, 0.1);
+        }
+
+        .ship-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .ship-name {
+            font-weight: bold;
+            color: #4fc3f7;
+        }
+
+        .ship-status {
+            font-size: 12px;
+            color: #90a4ae;
+        }
+
+        /* Zone de chat */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-messages {
+            flex: 1;
+            background: rgba(15, 19, 34, 0.5);
+            border: 1px solid #2a3f5f;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .chat-message {
+            margin-bottom: 15px;
+        }
+
+        .chat-user {
+            font-weight: bold;
+            color: #4fc3f7;
+            margin-bottom: 5px;
+        }
+
+        .chat-text {
+            color: #e0e6ed;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px;
+            background: rgba(26, 31, 58, 0.6);
+            border: 1px solid #2a3f5f;
+            border-radius: 6px;
+            color: #e0e6ed;
+            font-size: 14px;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #4fc3f7;
+        }
+
+        /* Scrollbar personnalisée */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(26, 31, 58, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2a3f5f;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4fc3f7;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+
+
+</head>
+<body>
+    <div class="container">
+        <!-- Menu latéral -->
+        <aside class="sidebar">
+            <div class="station-header">
+                <div class="station-name">Station Alpha-7</div>
+                <div class="station-type">Station Commerciale</div>
+            </div>
+
+            <nav class="nav-menu">
+                <div class="nav-item active" data-panel="dashboard">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">Tableau de bord</span>
+                </div>
+
+                <div class="nav-item" data-panel="hangar">
+                    <span class="nav-icon">🚀</span>
+                    <span class="nav-label">Hangar</span>
+                </div>
+
+                <div class="nav-item" data-panel="missions">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-label">Missions</span>
+                    <span class="nav-badge">3</span>
+                </div>
+
+                <div class="nav-item" data-panel="commerce">
+                    <span class="nav-icon">💰</span>
+                    <span class="nav-label">Commerce</span>
+                </div>
+
+                <div class="nav-item" data-panel="production">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-label">Production</span>
+                </div>
+
+                <div class="nav-item" data-panel="research">
+                    <span class="nav-icon">🔬</span>
+                    <span class="nav-label">Recherche</span>
+                </div>
+
+                <div class="nav-item" data-panel="fleet">
+                    <span class="nav-icon">⚔️</span>
+                    <span class="nav-label">Gestion Flotte</span>
+                </div>
+
+                <div class="nav-item" data-panel="chat">
+                    <span class="nav-icon">💬</span>
+                    <span class="nav-label">Chat</span>
+                    <span class="nav-badge">12</span>
+                </div>
+
+                <div class="nav-item" data-panel="info">
+                    <span class="nav-icon">ℹ️</span>
+                    <span class="nav-label">Informations</span>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Contenu principal -->
+        <main class="main-content">
+            <!-- Header supérieur (optionnel) -->
+            <header class="top-header">
+                <div class="header-left">
+                    <div class="resource-display">
+                        <span class="resource-icon">💰</span>
+                        <span class="resource-value">125,450</span>
+                        <span>Credits</span>
+                    </div>
+                    <div class="resource-display">
+                        <span class="resource-icon">⚡</span>
+                        <span class="resource-value">3,240</span>
+                        <span>Énergie</span>
+                    </div>
+                    <div class="resource-display">
+                        <span class="resource-icon">🔧</span>
+                        <span class="resource-value">1,890</span>
+                        <span>Matériaux</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary">Vue Spatiale</button>
+                    <button class="btn btn-danger">Déconnecter</button>
+                </div>
+            </header>
+
+            <!-- Zone de contenu -->
+            <div class="content-area">
+                <!-- Panel: Tableau de bord -->
+                <div class="content-panel active" id="panel-dashboard">
+                    <h1 class="section-title">Tableau de bord</h1>
+                    
+                    <div class="card">
+                        <div class="card-header">Activités récentes</div>
+                        <p>Bienvenue sur la Station Alpha-7, Commandant.</p>
+                        <p style="margin-top: 10px;">Vos vaisseaux sont prêts pour de nouvelles missions.</p>
+                    </div>
+
+                    <div class="actions-grid">
+                        <div class="action-card">
+                            <div class="action-icon">🚀</div>
+                            <div class="action-title">Lancer mission</div>
+                            <div class="action-desc">Envoyer un vaisseau en mission</div>
+                        </div>
+
+                        <div class="action-card" id="action-grid-mining">
+                            <div class="action-icon">⛏️</div>
+                            <div class="action-title">Mining</div>
+                            <div class="action-desc">Collecter des ressources</div>
+                        </div>
+
+                        <div class="action-card">
+                            <div class="action-icon">🔍</div>
+                            <div class="action-title">Explorer</div>
+                            <div class="action-desc">Découvrir de nouveaux secteurs</div>
+                        </div>
+
+                        <div class="action-card">
+                            <div class="action-icon">🛡️</div>
+                            <div class="action-title">Défense</div>
+                            <div class="action-desc">Patrouiller le secteur</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel: Hangar -->
+                <div class="content-panel" id="panel-hangar">
+                    <h1 class="section-title">Hangar - Vos vaisseaux</h1>
+                    
+                    <div class="ship-list">
+                        <div class="ship-item">
+                            <div class="ship-info">
+                                <div class="ship-name">USS Enterprise</div>
+                                <div class="ship-status">Statut: En station • HP: 100/100</div>
+                            </div>
+                            <button class="btn btn-primary">Gérer</button>
+                        </div>
+
+                        <div class="ship-item">
+                            <div class="ship-info">
+                                <div class="ship-name">Millennium Falcon</div>
+                                <div class="ship-status">Statut: En mission • HP: 85/100</div>
+                            </div>
+                            <button class="btn btn-primary">Gérer</button>
+                        </div>
+
+                        <div class="ship-item">
+                            <div class="ship-info">
+                                <div class="ship-name">Serenity</div>
+                                <div class="ship-status">Statut: En station • HP: 100/100</div>
+                            </div>
+                            <button class="btn btn-primary">Gérer</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel: Missions -->
+                <div class="content-panel" id="panel-missions">
+                    <h1 class="section-title">Missions disponibles</h1>
+                    
+                    <div class="card">
+                        <div class="card-header">Mission: Escorte de convoi</div>
+                        <p>Escortez un convoi commercial jusqu'au secteur Delta-9.</p>
+                        <p style="margin-top: 10px;"><strong>Récompense:</strong> 5,000 Credits</p>
+                        <button class="btn btn-success" style="margin-top: 15px;">Accepter</button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">Mission: Élimination pirates</div>
+                        <p>Neutralisez une base pirate dans le secteur Gamma-3.</p>
+                        <p style="margin-top: 10px;"><strong>Récompense:</strong> 12,000 Credits</p>
+                        <button class="btn btn-success" style="margin-top: 15px;">Accepter</button>
+                    </div>
+                </div>
+
+                <!-- Panel: Commerce -->
+                <div class="content-panel" id="panel-commerce">
+                    <h1 class="section-title">Marché Galactique</h1>
+                    
+                    <div class="card">
+                        <div class="card-header">Ressources disponibles</div>
+                        <p>Achetez et vendez des ressources.</p>
+                        <button class="btn btn-primary" style="margin-top: 15px;">Ouvrir le marché</button>
+                    </div>
+                </div>
+
+                <!-- Panel: Production -->
+                <div class="content-panel" id="panel-production">
+                    <h1 class="section-title">Chaînes de production</h1>
+                    
+                    <div class="card">
+                        <div class="card-header">Raffinerie de minerai</div>
+                        <p>Production: 150 unités/heure</p>
+                        <button class="btn btn-success" style="margin-top: 15px;">Améliorer</button>
+                    </div>
+                </div>
+
+                <!-- Panel: Recherche -->
+                <div class="content-panel" id="panel-research">
+                    <h1 class="section-title">Centre de recherche</h1>
+                    
+                    <div class="card">
+                        <div class="card-header">Technologies disponibles</div>
+                        <p>Débloquez de nouvelles technologies pour améliorer vos capacités.</p>
+                    </div>
+                </div>
+
+                <!-- Panel: Gestion de flotte -->
+                <div class="content-panel" id="panel-fleet">
+                    <h1 class="section-title">Gestion de flotte</h1>
+                    
+                    <div class="card">
+                        <div class="card-header">Ordres automatiques</div>
+                        <p>Configurez des ordres automatiques pour vos vaisseaux.</p>
+                        <button class="btn btn-primary" style="margin-top: 15px;">Configurer</button>
+                    </div>
+                </div>
+
+                <!-- Panel: Chat -->
+                <div class="content-panel" id="panel-chat">
+                    <h1 class="section-title">Chat Galactique</h1>
+                    
+                    <div class="chat-container">
+                        <div class="chat-messages">
+                            <div class="chat-message">
+                                <div class="chat-user">Capitaine Bob</div>
+                                <div class="chat-text">Quelqu'un veut former une flotte pour miner dans le secteur Beta ?</div>
+                            </div>
+                            <div class="chat-message">
+                                <div class="chat-user">Commander Alice</div>
+                                <div class="chat-text">Je suis partant ! Mon destroyer est prêt.</div>
+                            </div>
+                            <div class="chat-message">
+                                <div class="chat-user">Admiral Chen</div>
+                                <div class="chat-text">Attention, des pirates ont été signalés dans cette zone.</div>
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" class="chat-input" placeholder="Tapez votre message...">
+                            <button class="btn btn-primary">Envoyer</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel: Informations -->
+                <div class="content-panel" id="panel-info">
+                    <h1 class="section-title">Informations</h1>
+                    
+                    <div class="card">
+                        <div class="card-header">À propos de cette station</div>
+                        <p><strong>Nom:</strong> Station Alpha-7</p>
+                        <p><strong>Type:</strong> Station commerciale</p>
+                        <p><strong>Secteur:</strong> Alpha</p>
+                        <p><strong>Population:</strong> 12,450 habitants</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">Guide du commandant</div>
+                        <p>Consultez le guide pour apprendre à jouer.</p>
+                        <button class="btn btn-primary" style="margin-top: 15px;">Ouvrir le guide</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Gestion de la navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // Retirer la classe active de tous les items
+                document.querySelectorAll('.nav-item').forEach(nav => {
+                    nav.classList.remove('active');
+                });
+
+                // Ajouter la classe active à l'item cliqué
+                this.classList.add('active');
+
+                // Cacher tous les panels
+                document.querySelectorAll('.content-panel').forEach(panel => {
+                    panel.classList.remove('active');
+                });
+
+                // Afficher le panel correspondant
+                const panelId = this.getAttribute('data-panel');
+                document.getElementById('panel-' + panelId).classList.add('active');
+            });
+        });
+
+        // Exemple: Gestion du chat
+        const chatInput = document.querySelector('.chat-input');
+        const chatMessages = document.querySelector('.chat-messages');
+
+        document.querySelector('.chat-input-area .btn').addEventListener('click', function() {
+            const message = chatInput.value.trim();
+            if (message) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'chat-message';
+                messageDiv.innerHTML = `
+                    <div class="chat-user">Vous</div>
+                    <div class="chat-text">${message}</div>
+                `;
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                chatInput.value = '';
+            }
+        });
+
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.querySelector('.chat-input-area .btn').click();
+            }
+        });
+    </script>
+</body>
+</html>

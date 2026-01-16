@@ -6,7 +6,6 @@ import json
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-
 import math
 from datetime import timedelta
 from django.utils import timezone
@@ -137,14 +136,14 @@ class System(models.Model):
             })
         return ores_data
 
-
 class Station(models.Model):
     name = models.CharField('Nom')
     storage = models.IntegerField(default=0)
     system_location = models.CharField('Cible')
     pos_x = models.IntegerField(default=0)
     pos_y = models.IntegerField(default=0)
-    system_id = models.ForeignKey(System, on_delete=models.CASCADE, default=1)
+    system_id = models.ForeignKey('idle.System', on_delete=models.CASCADE, default=1)
+
 
 
 class Ship(models.Model):

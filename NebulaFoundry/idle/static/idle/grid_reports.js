@@ -22,14 +22,6 @@ export async function get_system_report() {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         var reporting_management = await response.json();
-//        async function log_response(reporting_management) {
-//            var serverTime = new Date(reporting_management.serv_now);
-//            var localTime = new Date();
-//            var drift = localTime - serverTime;
-//            console.log(localTime.getUTCHours(), localTime.getUTCMinutes(), localTime.getUTCSeconds());
-//            console.log(`Décalage: ${drift}ms`);
-//        }
-        //await log_response(reporting_management);
         return reporting_management
     }
     catch (error) {
@@ -51,14 +43,6 @@ export async function get_system_next_report() {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         var reporting_management = await response.json();
-//        async function log_response(reporting_management) {
-//            var serverTime = new Date(reporting_management.serv_now);
-//            var localTime = new Date();
-//            var drift = localTime - serverTime;
-//            console.log(localTime.getUTCHours(), localTime.getUTCMinutes(), localTime.getUTCSeconds());
-//            console.log(`Décalage: ${drift}ms`);
-//        }
-        //await log_response(reporting_management);
         return reporting_management
     }
     catch (error) {
@@ -75,9 +59,6 @@ export async function app_reporting_manager(app, delta) {
         var date_stop = new Date(system_reports.time_stop);
         app.reporting_management.tic_duration = (date_stop - date_start) / 1000;
         app.reporting_management.actual_report = system_reports;
-        //console.log(app.reporting_management.actual_report);
-
-        //app.reporting_management.next_report = system_reports.next_report;
         app.reporting_management.synchronisation_pending = false;
         //console.log('FETCH');
     }
@@ -173,7 +154,7 @@ export function load_rst_player(app) {
 
 export function control_tics(app, timestampSec, time_now) {
     if (app.reporting_management.tic_number !== timestampSec) {
-        console.log(`Nouveau tic: ${timestampSec}`);
+        //console.log(`Nouveau tic: ${timestampSec}`);
 
         // Nouveau tic détecté
         app.reporting_management.tic_number = timestampSec;
@@ -182,21 +163,18 @@ export function control_tics(app, timestampSec, time_now) {
         // Charger les données du nouveau tic
         load_player_rst_data(app);
 
-
-//    if (app.reporting_management.tic_number != timestampSec) {
-//        app.reporting_management.delta_tic = 0;
-//        app.reporting_management.tic_number = timestampSec;
-//        load_rst_player(app);
-//    }
-//    else {
-//        app.reporting_management.delta_tic += 1;
-//    }
+        //console.log(app.reporting_management.player_rst_next_tic);
 }
 }
 
 export function read_report_rst_player(app, delta) {
     const currentRst = app.reporting_management.player_rst_on_tic;
     const nextRst = app.reporting_management.player_rst_next_tic;
+
+    const dx = nextRst.pos_x - currentRst.pos_x;
+    const dy = nextRst.pos_y - currentRst.pos_y;
+    app.game_items.player.pixi.rotation = Math.atan2(dy, dx) + Math.PI / 2;
+
 
     if (!currentRst || !nextRst) {
         // Pas assez de données pour interpoler
@@ -224,25 +202,6 @@ export function read_report_rst_player(app, delta) {
 export function lerp(start, end, progress) {
     return start + (end - start) * progress;
 }
-
-
-
-
-//
-//    if (app.reporting_management.delta_tic == 0) {
-//        var player = app.reporting_management.player_rst_on_tic;
-//
-//        console.log('pixi', Math.floor(app.game_items.player.pixi.x), 'report', player.pos_x, 'next report', app.reporting_management.player_rst_next_tic.pos_x);
-//
-//        app.game_items.player.pixi.x = player.pos_x;
-//        app.game_items.player.pixi.y = player.pos_y;
-//    }
-//    else {
-//        var player = app.reporting_management.player_rst_next_tic;
-//
-//        app.game_items.player.pixi.x += (player.pos_x - app.game_items.player.pixi.x) / 55;
-//        app.game_items.player.pixi.y += (player.pos_y - app.game_items.player.pixi.y) / 55;
-//    }
 
 
 export function animate_with_report(app, delta) {

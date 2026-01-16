@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'idle.apps.IdleConfig',
+    'stations.apps.StationsConfig',
 ]
 
 MIDDLEWARE = [
