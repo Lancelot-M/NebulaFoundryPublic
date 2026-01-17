@@ -1,11 +1,17 @@
 const { Application, Assets, Container } = PIXI;
 import { addBackground } from './addbackground.js';
-import { get_ships_methods } from './grid_ships.js';
+import { get_ships_methods, app_ship_listening } from './grid_ships.js';
 import { get_stations } from './grid_stations.js';
 import { get_ores } from './grid_ores.js';
+import { menu_functions } from './grid_menus.js';
 import { isEmpty, animate_with_report, app_reporting_manager } from './grid_reports.js';
 
 
+// Fonction js anexe
+menu_functions();
+
+
+// Fonction de l'app PIXI "le grid affichée  en 2D"
 var app = new Application();
 
 // Initialisation de la scene
@@ -104,6 +110,7 @@ function center_grid(app) {
             center_grid(app);
             if (app.reporting_management.synchronisation_pending == false) {
                 //console.log("synchronisation_pending : pas encore set")
+                app_ship_listening(app);
                 app_reporting_manager(app, delta);
             }
             else {

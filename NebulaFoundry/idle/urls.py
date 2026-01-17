@@ -11,4 +11,5 @@ urlpatterns = [
     path("my_ship/", views.my_ship, name="player data"),
     path("system_report/<int:system_fk>", views.system_report, name="get report"),
     path("system_next_report/<int:system_fk>", views.get_system_next_report, name="get next report"),
+    path("back_home_station", views.back_home_station, name="back_home_station"),
 ]

@@ -26,7 +26,7 @@ def home(request):
     data = system.get_data()
 
 
-    return render(request, "idle/home.html", data)
+    return render(request, "idle/grid_main.html", data)
 
 def system(request):
     return render(request, "idle/system.html", {})
@@ -44,6 +44,9 @@ def system_ores(request, system_id):
 def my_ship(request):
     # ship = SpaceShip.objects.get(player=request.user)
     ship = Ship.objects.get(pk=5)
+    ship.is_dock = False
+    ship.action_order = "mining"
+    ship.save()
     return JsonResponse(ship.player_data())
 
 def system_report(request, system_fk):
@@ -56,4 +59,17 @@ def get_system_next_report(request, system_fk):
     system = System.objects.get(pk=system_fk)
     report_system = system.get_system_next_report()
     return JsonResponse(report_system)
+
+def back_home_station(request):
+    try:
+        # ship = SpaceShip.objects.get(player=request.user)
+        ship = Ship.objects.get(pk=5)
+        ship.action_order = "back_home_station"
+        ship.target = ship.station_fk
+        ship.save()
+    except Ship.DoesNotExist:
+        raise Http404("Ship does not exist")
+    except Exception as e:
+        raise e
+    return HttpResponse("Ship back_home_station")
 

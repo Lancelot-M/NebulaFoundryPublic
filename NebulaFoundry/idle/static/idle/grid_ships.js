@@ -60,3 +60,10 @@ export async function set_serv_ships_vals(app) {
 //    var pipou = await reponse.json();
     app.game_items.player.django = await reponse.json();
 }
+
+export function app_ship_listening(app) {
+    if (app.game_items.player.is_docking && app.game_items.player.is_docking == true) {
+        app.reporting_management.synchronisation_pending = true;
+        window.location.replace('http://localhost:8000/hangar/1');
+    }
+}

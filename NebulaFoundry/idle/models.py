@@ -156,14 +156,16 @@ class Ship(models.Model):
     storage_now = models.IntegerField(default=0)
     minning_speed = models.IntegerField(default=0)
     speed = models.IntegerField(default=0)
-    action_order = models.CharField('Ordre donné', default="")
+    action_order = models.CharField('Ordre donné par le joueur', default="")
     action_now = models.CharField('Action en cours', default="")
 
 
     pos_x = models.IntegerField(default=0)
     pos_y = models.IntegerField(default=0)
-    system_fk = models.ForeignKey(System, on_delete=models.CASCADE, default=1)
-    station_fk = models.ForeignKey(Station, on_delete=models.CASCADE, default=1)
+    system_fk = models.ForeignKey(System, on_delete=models.SET_NULL, null=True)
+    station_fk = models.ForeignKey(Station, on_delete=models.SET_NULL, null=True, verbose_name="Home station of player")
+    is_dock = models.BooleanField(default=False)
+    # docked_station_fk = models.ForeignKey(Station, on_delete=models.SET_NULL, verbose_name="Station dans laquelle est dock le joueur")
     # Target générique - peut pointer vers Ore, Station, Ship, etc.
     target_content_type = models.ForeignKey(
         ContentType,
@@ -191,8 +193,8 @@ class Ship(models.Model):
             self.action_move()
         elif self.action_order == 'mining':
             self.action_move()
-        elif self.action_order == 'landing':
-            pass
+        elif self.action_order == 'back_home_station':
+            self.back_home_station()
 #        self.save()
 
     def calcul_action_now(self):
@@ -210,17 +212,26 @@ class Ship(models.Model):
         ore = Ore.objects.filter(system_id=self.system_fk.pk)[0]
         return ore
 
+    def ship_on_target(self):
+        """Retourne True si le ship est arrivé sur la position de la target sinon False"""
+        return self.target.pos_x == self.pos_x and self.target.pos_y == self.pos_y
 
+    def back_home_station(self):
+        if self.ship_on_target():
+            self.is_dock = True
+        else:
+            self.move_ship_on_target()
 
     def action_move(self):
-        if not self.target or (self.target.pos_x == self.pos_x and self.target.pos_y == self.pos_y):
+        """Logique entre 2 déplacement"""
+        if not self.target or self.ship_on_target():
             self.calcul_action_now()
         else:
-            self.move_ship()
+            self.move_ship_on_target()
         if self.action_now != 'moving':
             self.action_now = 'moving'
 
-    def move_ship(self):
+    def move_ship_on_target(self):
         """
         Déplace le ship en direction de sa cible.
         """
@@ -272,8 +283,8 @@ class ReportSystem(models.Model):
     system_fk = models.ForeignKey(System, on_delete=models.CASCADE, null=True)
     # Juste le dict pré-calculé, c'est suffisant !
     cached_dict = models.JSONField(null=True)
-    time_start = models.DateTimeField(default=timezone.now())
-    time_stop = models.DateTimeField(default=timezone.now())
+    time_start = models.DateTimeField(null=True)
+    time_stop = models.DateTimeField(null=True)
 
 
     @classmethod
@@ -293,7 +304,7 @@ class ReportSystem(models.Model):
         report_time_duration = self.system_fk.report_time_duration
         for tic in range(0, report_time_duration):
             timestamp = self.time_start + timedelta(seconds=tic)
-            ships = Ship.objects.filter(system_fk=self.system_fk.pk)
+            ships = Ship.objects.filter(system_fk=self.system_fk.pk, is_dock=False)
             for ship in ships:
                 ship.play_tic()
                 ship.save()
@@ -307,6 +318,7 @@ class ReportSystem(models.Model):
                     storage=ship.storage_now,
                     target_model=ship.target_content_type.model,
                     target_id=ship.target_object_id,
+                    is_dock=ship.is_dock,
                 )
 
         # ores = Ore.objects.filter(system_id=self.system_fk)
@@ -331,6 +343,7 @@ class ReportSystem(models.Model):
                             'storage': rst.storage,
                             'target_model': rst.target_model,
                             'target_id': rst.target_id,
+                            'is_dock': rst.is_dock,
                         }
                     }
                 else:
@@ -342,6 +355,7 @@ class ReportSystem(models.Model):
                             'storage': rst.storage,
                             'target_model': rst.target_model,
                             'target_id': rst.target_id,
+                            'is_dock': rst.is_dock,
                         }
                     })
             self.cached_dict = cached_dict
@@ -374,6 +388,7 @@ class ReportSystemTic(models.Model):
     storage = models.IntegerField(null=True)
     target_model = models.CharField(null=True)
     target_id = models.IntegerField(null=True)
+    is_dock = models.BooleanField(default=False)
 
 
     @classmethod

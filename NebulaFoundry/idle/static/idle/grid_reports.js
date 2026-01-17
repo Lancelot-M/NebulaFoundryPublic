@@ -135,21 +135,6 @@ export function load_rst_player(app) {
             app.reporting_management.player_rst_next_tic = nextRst;
         }
     }
-
-
-
-//    var player_rst = app.reporting_management.actual_report.rst_ships[app.game_items.player.django.id];
-//    if (app.reporting_management.tic_number in player_rst) {
-//        app.reporting_management.player_rst_on_tic = player_rst[app.reporting_management.tic_number];
-//    }
-//    if (app.reporting_management.tic_number + 1 in player_rst) {
-//        app.reporting_management.player_rst_next_tic = player_rst[app.reporting_management.tic_number + 1];
-//    }
-//    else if (app.reporting_management.next_report && app.reporting_management.next_report.rst_ships &&
-//        app.reporting_management.tic_number + 1 in app.reporting_management.next_report.rst_ships[app.game_items.player.django.id]) {
-//        app.reporting_management.player_rst_next_tic = app.reporting_management.next_report.rst_ships[app.game_items.player.django.id][app.reporting_management.tic_number + 1];
-//    }
-    //console.log(app.reporting_management.player_rst_on_tic, app.reporting_management.player_rst_next_tic);
 }
 
 export function control_tics(app, timestampSec, time_now) {
@@ -170,6 +155,17 @@ export function control_tics(app, timestampSec, time_now) {
 export function read_report_rst_player(app, delta) {
     const currentRst = app.reporting_management.player_rst_on_tic;
     const nextRst = app.reporting_management.player_rst_next_tic;
+
+
+    if (!currentRst) {
+        console.log('NO REST :/');
+        return;
+    }
+
+    if (currentRst.is_dock) {
+        app.game_items.player.is_docking = true;
+    }
+
 
     const dx = nextRst.pos_x - currentRst.pos_x;
     const dy = nextRst.pos_y - currentRst.pos_y;

@@ -1,4 +1,4 @@
-import { getCookie } from './credentials_and_co.js';
+import { getCookie } from '../idle/credentials_and_co.js';
 
 // Fonction main
 export function mining_functions() {
@@ -38,27 +38,22 @@ export function listen_mining_button() {
             const shipId = 1; // À remplacer par l'ID réel de votre ship
 
             // Appel PUT au serveur Django
-            const response = await fetch(`http://localhost:8000/api/ship/${shipId}/order/`, {
-                method: 'PUT',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({
-                    order: 'mining',
-                    // Ajouter d'autres paramètres si nécessaire
-                    // target_id: asteroidId,
-                    // target_type: 'ore'
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('✅ Ordre mining envoyé:', data);
+//            const response = await fetch(`http://localhost:8000/home`, {
+//                method: 'PUT',
+//                headers: {
+//                    'Accept': 'application/json',
+//                    'Content-Type': 'application/json',
+//                    'X-CSRFToken': getCookie('csrftoken')
+//                },
+//
+//            });
+//
+//            if (!response.ok) {
+//                throw new Error(`HTTP error! status: ${response.status}`);
+//            }
+//
+//            const data = await response.json();
+//            console.log('✅ Ordre mining envoyé:', data);
 
             // Message de succès avant redirection
             this.innerHTML = `
@@ -70,7 +65,7 @@ export function listen_mining_button() {
 
             // Redirection après 500ms
             setTimeout(() => {
-                window.location.replace('home.html');
+                window.location.replace('http://localhost:8000/home');
             }, 500);
 
 
